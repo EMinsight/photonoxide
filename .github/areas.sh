@@ -158,6 +158,8 @@ ignored() {
   case "$1" in
     site/* | *.md) return 0 ;;
     .github/dependabot.yml | .github/ISSUE_TEMPLATE/* | .github/scripts/*) return 0 ;;
+    # the full suite on your own machine, and the hooks that start it
+    .github/full-suite.sh | .github/hooks/*) return 0 ;;
     # this workflow and the map run everything; the others run as themselves
     .github/workflows/ci.yml | .github/areas.sh) return 1 ;;
     .github/workflows/*) return 0 ;;
@@ -232,7 +234,8 @@ if [ "$everything" = true ]; then
   echo "native=true"
   echo "cases=*"
   echo "examples=*"
-  echo "studio=all"
+  # the studio's own code differs by system; the library under it doesn't
+  if [ "${1:-}" = --all ] || [ "$studio_systems" = true ]; then echo "studio=all"; else echo "studio=linux"; fi
   exit 0
 fi
 
