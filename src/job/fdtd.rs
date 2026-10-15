@@ -225,7 +225,8 @@ struct ViewSpec {
 struct FdtdTask {
     #[allow(dead_code)] // read to dispatch, checked by serde
     kind: String,
-    stack: super::StackField,
+    /// The stack; a job's `[device]` gives its own instead.
+    stack: Option<super::StackField>,
     core_nm: Option<f64>,
     bottom_oxide_um: Option<f64>,
     wavelength_um: f64,
@@ -446,6 +447,7 @@ impl Setup {
     /// boundaries, the spectrum, each source's and monitor's fields and place, the stopping rule
     /// and the view.
     fn new(job: &Job) -> Result<Setup> {
+        super::device::check_fdtd_task(job)?;
         let task = parse(job)?;
         check_window("x_um", task.x_um)?;
         check_window("y_um", task.y_um)?;
@@ -478,17 +480,27 @@ impl Setup {
                 "z_um is for a 3D job (dimensions = 3): a 2D job is the layer's plane",
             ));
         }
-        let structure = draw_paths(
-            draw(
-                named_stack(&task.stack, task.core_nm, task.bottom_oxide_um)?,
-                &task.rect,
-                &task.circle,
-                &task.ring,
+        // a job's device is its structure, its ports' guides led on through the window's edges
+        let structure = match super::device::structure(job, task.x_um, task.y_um)? {
+            Some(s) => s,
+            None => draw_paths(
+                draw(
+                    named_stack(
+                        task.stack
+                            .as_ref()
+                            .ok_or_else(|| task_error("needs a stack, e.g. stack = \"soi_220\""))?,
+                        task.core_nm,
+                        task.bottom_oxide_um,
+                    )?,
+                    &task.rect,
+                    &task.circle,
+                    &task.ring,
+                )?,
+                &task.path,
+                &task.shape,
+                &task.component,
             )?,
-            &task.path,
-            &task.shape,
-            &task.component,
-        )?;
+        };
         if !three && !task.body.is_empty() {
             return Err(task_error(
                 "[[task.body]] is a body in space: it is for a 3D job (dimensions = 3), which \
@@ -2114,7 +2126,16 @@ fn spectra(sim: &Simulation, setup: &Setup, m: &Monitors, last: bool) -> Vec<Eve
     let wavelengths_um: Vec<f64> = fs.iter().map(|f| 1.0 / f.to_natural()).collect();
     let time_um = sim.time();
     let mut out = Vec::new();
-    let per = |v: Vec<f64>| -> Vec<f64> { v.iter().zip(&incident).map(|(a, b)| a / b).collect() };
+    // before the pulse has reached a source's own monitor (a spectrum recorded early, on a slow
+    // machine) its incident power is nought: nothing is referred to it yet, and the record holds
+    // zeros, never a NaN (which JSON can't hold, and the record's replay would refuse)
+    let share = |a: f64, b: f64| if b > 0.0 { a / b } else { 0.0 };
+    let per = |v: Vec<f64>| -> Vec<f64> {
+        v.iter()
+            .zip(&incident)
+            .map(|(&a, &b)| share(a, b))
+            .collect()
+    };
     // each mode source's reflection, back into its guide
     for (s, plan) in setup.sources.iter().enumerate() {
         if let SourcePlan::Mode { axis, .. } = plan {
@@ -2139,7 +2160,11 @@ fn spectra(sim: &Simulation, setup: &Setup, m: &Monitors, last: bool) -> Vec<Eve
                 wavelengths_um: wavelengths_um.clone(),
                 series: vec![SpectrumSeries {
                     label: format!("back along {}", axis_name(*axis)),
-                    values: back.iter().zip(&forward).map(|(b, f)| b / f).collect(),
+                    values: back
+                        .iter()
+                        .zip(&forward)
+                        .map(|(&b, &f)| share(b, f))
+                        .collect(),
                 }],
                 time_um,
                 last,
@@ -2943,6 +2968,28 @@ wavelengths_um = [1.55]
 until = "time"
 time_um = 160.0
 "#;
+
+    #[test]
+    fn a_spectrum_before_the_pulse_arrives_holds_zeros_and_the_record_replays() {
+        // stopped long before the pulse reaches anything: the spectra, referred to an incident
+        // power still nought, are recorded as zeros (a NaN would make the record unreadable,
+        // as a spectrum recorded early on a slow machine did)
+        let early = SMALL.replace("time_um = 160.0", "time_um = 0.5");
+        let events = run_job(&early, "early");
+        let spectra: Vec<&Vec<SpectrumSeries>> = events
+            .iter()
+            .filter_map(|e| match e {
+                Event::FdtdSpectrum { series, .. } => Some(series),
+                _ => None,
+            })
+            .collect();
+        assert!(!spectra.is_empty());
+        for series in spectra {
+            for s in series {
+                assert!(s.values.iter().all(|v| v.is_finite()), "{s:?}");
+            }
+        }
+    }
 
     #[test]
     fn a_job_records_frames_progress_spectra_resonances_and_fields() {

@@ -24,7 +24,7 @@ use photonoxide::circuit::{Fidelity, Spectrum};
 use photonoxide::device::{self, Built, Device, LayerSpec, MaterialSpec, Spec, StackSpec};
 use photonoxide::expr::{self, Dim, Expr};
 use photonoxide::job::{self, Event};
-use photonoxide::run::Job;
+use photonoxide::run::{Format, Job};
 use serde::{Deserialize, Serialize};
 
 use crate::circuits::{PortInfo, SpectrumData, Sweep, ports_of, write_touchstone};
@@ -135,6 +135,9 @@ pub struct DeviceInfo {
     lesson: &'static str,
     /// The examples that reproduce a paper on it.
     examples: Vec<&'static str>,
+    /// Its 2D model by FDFD, where its 2D fidelity has a cheaper one in its place (an MMI's
+    /// guided modes): a job's `model_2d = "fdfd"`.
+    fdfd_2d: Option<MethodInfo>,
 }
 
 #[derive(Serialize)]
@@ -204,37 +207,53 @@ pub fn device_library() -> Result<Vec<DeviceInfo>, String> {
                         max: p.max,
                     })
                     .collect(),
-                fidelities: d
-                    .fidelities()
-                    .iter()
-                    .map(|m| MethodInfo {
-                        fidelity: fidelity_name(m.fidelity),
-                        name: m.name.clone(),
-                        write_up: m.write_up.clone(),
-                        papers: m.papers.clone(),
-                        error: m.error.as_ref().map(|s| StatedInfo {
-                            quantity: s.quantity.clone(),
-                            bound: s.bound,
-                            unit: s.unit.clone(),
-                            against: fidelity_name(s.against),
-                        }),
-                        validity: m
-                            .validity
-                            .iter()
-                            .map(|r| RangeInfo {
-                                name: r.name.clone(),
-                                min: r.min,
-                                max: r.max,
-                            })
-                            .collect(),
-                    })
-                    .collect(),
+                fidelities: d.fidelities().iter().map(method_info).collect(),
                 ports,
                 lesson,
                 examples: examples.to_vec(),
+                fdfd_2d: fdfd_2d(d.kind()),
             })
         })
         .collect()
+}
+
+/// A model as the page shows it.
+fn method_info(m: &device::Method) -> MethodInfo {
+    MethodInfo {
+        fidelity: fidelity_name(m.fidelity),
+        name: m.name.clone(),
+        write_up: m.write_up.clone(),
+        papers: m.papers.clone(),
+        error: m.error.as_ref().map(|s| StatedInfo {
+            quantity: s.quantity.clone(),
+            bound: s.bound,
+            unit: s.unit.clone(),
+            against: fidelity_name(s.against),
+        }),
+        validity: m
+            .validity
+            .iter()
+            .map(|r| RangeInfo {
+                name: r.name.clone(),
+                min: r.min,
+                max: r.max,
+            })
+            .collect(),
+    }
+}
+
+/// The 2D model by FDFD of a device whose 2D fidelity is another by default: an MMI's.
+fn fdfd_2d(kind: &str) -> Option<MethodInfo> {
+    let mmi = match kind {
+        "MMI 1x2" => device::StripMmi::one_by_two(),
+        "MMI 2x2" => device::StripMmi::two_by_two(),
+        _ => return None,
+    };
+    mmi.with_model_2d(device::Model2d::Fdfd)
+        .fidelities()
+        .iter()
+        .find(|m| m.fidelity == Fidelity::TwoD)
+        .map(method_info)
 }
 
 // ---- a design, as the window sends it ----
@@ -877,6 +896,438 @@ pub fn device_touchstone(
     write_touchstone(Path::new(&path), &s)
 }
 
+// ---- the jobs that compute a design (the Simulate tab) ----
+
+/// How a job computes its design, as the Simulate tab's form holds it: [`job::Compute`].
+#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
+pub struct ComputeIn {
+    /// FDTD of the drawn structure, 2 or 3 dimensions; `None`, the device's own model.
+    #[serde(default)]
+    pub fdtd: Option<u8>,
+    /// The band, µm: from, to, how many wavelengths.
+    #[serde(default)]
+    pub band: Option<(f64, f64, usize)>,
+    #[serde(default)]
+    pub step_nm: Option<f64>,
+    #[serde(default)]
+    pub step_z_nm: Option<f64>,
+    #[serde(default)]
+    pub margin_um: Option<f64>,
+    #[serde(default)]
+    pub samples: Option<usize>,
+    #[serde(default)]
+    pub pml_cells: Option<usize>,
+    #[serde(default)]
+    pub fdfd_2d: bool,
+    #[serde(default)]
+    pub timeout_minutes: Option<f64>,
+}
+
+impl ComputeIn {
+    fn compute(&self) -> job::Compute {
+        let mut c = match self.fdtd {
+            Some(d) => job::Compute::fdtd(d),
+            None => job::Compute::model(),
+        };
+        c.band = self.band;
+        c.step_nm = self.step_nm;
+        c.step_z_nm = self.step_z_nm;
+        c.margin_um = self.margin_um;
+        c.samples = self.samples;
+        c.pml_cells = self.pml_cells;
+        c.fdfd_2d = self.fdfd_2d;
+        c.timeout_minutes = self.timeout_minutes;
+        c
+    }
+
+    /// What the form holds of a device job's task (`None` for a design alone) and its timeout.
+    fn of(task: &toml::Table, timeout: Option<f64>) -> Option<ComputeIn> {
+        let num = |t: &toml::Table, k: &str| {
+            t.get(k)
+                .and_then(|v| v.as_float().or_else(|| v.as_integer().map(|i| i as f64)))
+        };
+        let count = |t: &toml::Table, k: &str| {
+            t.get(k)
+                .and_then(toml::Value::as_integer)
+                .and_then(|i| usize::try_from(i).ok())
+        };
+        let band = |t: &toml::Table| match (num(t, "from_um"), num(t, "to_um")) {
+            (Some(a), Some(b)) => Some((a, b, count(t, "points").unwrap_or(101))),
+            _ => None,
+        };
+        let mut c = ComputeIn {
+            step_nm: num(task, "step_nm"),
+            pml_cells: count(task, "pml_cells"),
+            timeout_minutes: timeout,
+            ..ComputeIn::default()
+        };
+        match task.get("kind").and_then(toml::Value::as_str)? {
+            "fdtd" => {
+                c.fdtd = Some(count(task, "dimensions").map_or(2, |d| d as u8));
+                c.band = task
+                    .get("spectrum")
+                    .and_then(toml::Value::as_table)
+                    .and_then(band);
+            }
+            _ => {
+                c.band = band(task);
+                c.step_z_nm = num(task, "step_z_nm");
+                c.margin_um = num(task, "margin_um");
+                c.samples = count(task, "samples");
+                c.fdfd_2d = task.get("model_2d").and_then(toml::Value::as_str) == Some("fdfd");
+            }
+        }
+        Some(c)
+    }
+}
+
+/// The text of the job that computes `spec` as `compute` says, named `name`
+/// ([`job::from_device`]), with an opening comment saying what it computes and how to run it.
+///
+/// # Errors
+///
+/// What the library refuses: a grid the device doesn't take, a 3D solve too large, a band that
+/// isn't one.
+pub fn job_text_of(spec: &SpecIn, compute: &ComputeIn, name: &str) -> Result<String, String> {
+    let s = spec.spec()?;
+    let j = job::from_device(name, &s, &compute.compute()).map_err(text)?;
+    let how = match compute.fdtd {
+        Some(2) => "by 2D FDTD of its drawn structure (the effective index method's plane: a 2D \
+                    estimate, not the device's performance)"
+            .to_owned(),
+        Some(_) => "by 3D FDTD of its drawn structure".to_owned(),
+        None if compute.fdfd_2d => "by its 2D model, 2D FDFD (labelled 2D)".to_owned(),
+        None => format!(
+            "by its own {} model",
+            if spec.fidelity == "analytic" {
+                "analytic"
+            } else {
+                spec.fidelity.as_str()
+            }
+        ),
+    };
+    let body = j.to_text(Format::Toml).map_err(text)?;
+    Ok(format!(
+        "# The {} {how}.\n#   photonoxide run jobs/{name}.toml\n{body}",
+        spec.kind
+    ))
+}
+
+/// The job that computes `spec` as `compute` says, as its text.
+#[tauri::command(async)]
+pub fn device_job(spec: SpecIn, compute: ComputeIn, name: String) -> Result<String, String> {
+    job_text_of(&spec, &compute, &name)
+}
+
+/// A device job's text, read back into the Simulate tab's form: its design and how it is
+/// computed, and what of it the form can't hold.
+#[derive(Debug, PartialEq, Serialize)]
+pub struct JobForm {
+    name: String,
+    /// The design, when the text holds one.
+    spec: Option<SpecIn>,
+    /// How it is computed; `None` for a design alone.
+    compute: Option<ComputeIn>,
+    /// What the text holds that the form can't, as `task.<key>` (or a table's name): the job
+    /// runs as its text says, and the form says so.
+    beyond: Vec<String>,
+    /// Why it isn't a job the library runs, if it isn't.
+    error: Option<String>,
+    /// A model that is an FDFD: its cells along x and y and the unknowns of a solve.
+    size: Option<(usize, usize, f64)>,
+}
+
+/// Whether two values are the same, a number the same whether written as an integer or a float.
+fn same(a: &toml::Value, b: &toml::Value) -> bool {
+    use toml::Value as V;
+    match (a, b) {
+        (V::Integer(x), V::Float(y)) | (V::Float(y), V::Integer(x)) => *x as f64 == *y,
+        (V::Float(x), V::Float(y)) => x.to_bits() == y.to_bits(),
+        (V::Array(x), V::Array(y)) => {
+            x.len() == y.len() && x.iter().zip(y).all(|(p, q)| same(p, q))
+        }
+        (V::Table(x), V::Table(y)) => {
+            x.len() == y.len() && x.iter().all(|(k, v)| y.get(k).is_some_and(|w| same(v, w)))
+        }
+        _ => a == b,
+    }
+}
+
+/// Reads a device job's text into the Simulate tab's form.
+pub fn read_job_form(text: &str) -> JobForm {
+    let mut form = JobForm {
+        name: String::new(),
+        spec: None,
+        compute: None,
+        beyond: Vec::new(),
+        error: None,
+        size: None,
+    };
+    let job = match Job::parse(text) {
+        Ok(j) => j,
+        Err(e) => {
+            form.error = Some(text_of(e));
+            return form;
+        }
+    };
+    form.name = job.name().to_owned();
+    let Some(table) = job.device() else {
+        form.error = Some(format!(
+            "{} isn't a device's job: it has no [device] table",
+            job.name()
+        ));
+        return form;
+    };
+    let spec = match Spec::from_table(table) {
+        Ok(s) => s,
+        Err(e) => {
+            form.error = Some(text_of(e));
+            return form;
+        }
+    };
+    let file: toml::Table = toml::from_str(text).unwrap_or_default();
+    let timeout = file
+        .get("timeout_minutes")
+        .and_then(|v| v.as_float().or_else(|| v.as_integer().map(|i| i as f64)));
+    form.spec = Some(SpecIn::of(&spec));
+    form.compute = ComputeIn::of(job.task(), timeout);
+    for key in file.keys() {
+        if !["name", "timeout_minutes", "device", "task"].contains(&key.as_str()) {
+            form.beyond.push(key.clone());
+        }
+    }
+    if let Err(e) = job::check(&job) {
+        form.error = Some(text_of(e));
+        return form;
+    }
+    form.size = job::fdfd_size(&job).ok().flatten();
+    // what the form would write: any key of the task it writes otherwise is beyond it
+    if let Some(compute) = &form.compute {
+        match job::from_device(job.name(), &spec, &compute.compute()) {
+            Ok(again) => {
+                let mine = again.task();
+                for (k, v) in job.task() {
+                    if mine.get(k).is_none_or(|w| !same(v, w)) {
+                        form.beyond.push(format!("task.{k}"));
+                    }
+                }
+            }
+            Err(e) => form.error = Some(text_of(e)),
+        }
+    }
+    form
+}
+
+/// A device job's text read into the Simulate tab's form.
+#[tauri::command(async)]
+pub fn device_job_read(text: String) -> JobForm {
+    read_job_form(&text)
+}
+
+// ---- the design as the solver sees it ----
+
+/// A design's permittivity on the cells the model chosen solves on: from above at the core's
+/// middle, and on the cut; what the page's "As solved" view shows.
+#[derive(Debug, Serialize)]
+pub struct Solved {
+    /// From above, at the core's middle; `None` for a model that solves a cross-section only.
+    top: Option<photonoxide::raster::Raster>,
+    /// On the cut, across it and up.
+    cut: Option<photonoxide::raster::Raster>,
+    /// The cells' size in the plane and up, nm, as the solver takes them.
+    step_nm: f64,
+    step_z_nm: f64,
+    /// How many times coarser than the solver's the pictures' cells are (1: its own).
+    coarser: f64,
+    /// What the solver sees, in a sentence.
+    note: String,
+}
+
+/// The most cells a picture of [`Solved`] has: past it, its cells are coarser than the solver's,
+/// and it says so.
+const MOST_PIXELS: f64 = 4e5;
+
+/// `spec` as the model `compute` chooses solves it: its cells, from above and on the cut at
+/// `at` µm along `normal` (`"x"` or `"y"`).
+///
+/// # Errors
+///
+/// The design's, and a cut that isn't one.
+pub fn solved(spec: &SpecIn, compute: &ComputeIn, normal: &str, at: f64) -> Result<Solved, String> {
+    use photonoxide::geometry::Point;
+    use photonoxide::raster::Raster;
+    use photonoxide::units::{Length, Wavelength};
+    let s = spec.spec()?;
+    let (device, design) = s.build().map_err(text)?;
+    let values = design.values();
+    let g = device.geometry(values).map_err(text)?;
+    let core = g
+        .ports
+        .first()
+        .map_or_else(|| "Si".to_owned(), |p| p.layer.clone());
+    let (_, bottom, top) = g
+        .structure
+        .stack()
+        .layer(&core)
+        .ok_or_else(|| format!("the stack has no layer {core}"))?;
+    let (bottom, top) = (bottom.to_um(), top.to_um());
+    let wavelength = Wavelength::um(values.get("wavelength").unwrap_or(1.55)).map_err(text)?;
+    // the window: the shapes and ports with 1 µm around them, 1 µm below and above the core
+    let (mut x, mut y) = (
+        [f64::INFINITY, f64::NEG_INFINITY],
+        [f64::INFINITY, f64::NEG_INFINITY],
+    );
+    let mut take = |p: Point| {
+        x = [x[0].min(p.x.to_um()), x[1].max(p.x.to_um())];
+        y = [y[0].min(p.y.to_um()), y[1].max(p.y.to_um())];
+    };
+    for l in g.structure.stack().layers() {
+        for shape in g.structure.shapes(&l.name) {
+            let b = shape.bounds();
+            take(b.min);
+            take(b.max);
+        }
+    }
+    for p in &g.ports {
+        take(p.position);
+    }
+    if !x[0].is_finite() {
+        return Err("the design draws nothing".into());
+    }
+    let (x, y, z) = (
+        [x[0] - 1.0, x[1] + 1.0],
+        [y[0] - 1.0, y[1] + 1.0],
+        [bottom - 1.0, top + 1.0],
+    );
+    // the cells: the model's
+    let fdfd = matches!(s.kind.as_str(), "MMI 1x2" | "MMI 2x2" | "Y-branch")
+        && s.fidelity != Fidelity::Analytic
+        && !(s.fidelity == Fidelity::TwoD && s.kind.starts_with("MMI") && !compute.fdfd_2d);
+    let three = s.fidelity == Fidelity::ThreeD;
+    let (step, step_z, plane, note) = if let Some(d) = compute.fdtd {
+        let h = compute.step_nm.unwrap_or(if d == 3 { 50.0 } else { 40.0 }) / 1e3;
+        let note = if d == 3 {
+            "3D FDTD's Yee cells on the stack".to_owned()
+        } else {
+            "2D FDTD's cells in the core's plane: each holds its slab's effective index squared, \
+             not the permittivity drawn here (the effective index method)"
+                .to_owned()
+        };
+        (h, h, true, note)
+    } else if fdfd {
+        let h = compute
+            .step_nm
+            .map_or(if three { 0.04 } else { 0.02 }, |v| v / 1e3);
+        let hz = compute
+            .step_z_nm
+            .map_or(h / if three { 2.0 } else { 4.0 }, |v| v / 1e3);
+        let note = if three {
+            "3D FDFD's cells on the stack, each its 8 × 8 samples' average".to_owned()
+        } else {
+            "2D FDFD's cells in the core's plane: each holds its slab's effective index squared, \
+             not the permittivity drawn here (the effective index method)"
+                .to_owned()
+        };
+        (h, hz, true, note)
+    } else if s.fidelity == Fidelity::Analytic {
+        return Ok(Solved {
+            top: None,
+            cut: None,
+            step_nm: 0.0,
+            step_z_nm: 0.0,
+            coarser: 1.0,
+            note: "a closed form, or a fit to the 3D solver: this model solves no grid".into(),
+        });
+    } else {
+        let h = compute
+            .step_nm
+            .map_or(if s.kind == "bend" { 0.02 } else { 0.01 }, |v| v / 1e3);
+        (
+            h,
+            h,
+            false,
+            "the mode solver's cross-section: cells fitted to the core about this far apart, its \
+             faces on nodes"
+                .into(),
+        )
+    };
+    let picture =
+        |a: [f64; 2], b: [f64; 2], ha: f64, hb: f64, at: &dyn Fn(f64, f64) -> (Point, f64)| {
+            let mut ha = ha;
+            let mut hb = hb;
+            let cells = ((a[1] - a[0]) / ha) * ((b[1] - b[0]) / hb);
+            let coarser = (cells / MOST_PIXELS).sqrt().max(1.0).ceil();
+            ha *= coarser;
+            hb *= coarser;
+            let na = (((a[1] - a[0]) / ha).round() as usize).max(1);
+            let nb = (((b[1] - b[0]) / hb).round() as usize).max(1);
+            let mut v = Vec::with_capacity(na * nb);
+            for j in 0..nb {
+                for i in 0..na {
+                    let (p, zz) = at(
+                        a[0] + (i as f64 + 0.5) * (a[1] - a[0]) / na as f64,
+                        b[0] + (j as f64 + 0.5) * (b[1] - b[0]) / nb as f64,
+                    );
+                    let m = g.structure.material_at(p, Length::um(zz));
+                    v.push(m.permittivity(wavelength).map_err(text)?.re as f32);
+                }
+            }
+            Ok::<_, String>((
+                Raster {
+                    nx: na,
+                    ny: nb,
+                    x0: a[0],
+                    x1: a[1],
+                    y0: b[0],
+                    y1: b[1],
+                    values: v,
+                },
+                coarser,
+            ))
+        };
+    let mid = 0.5 * (bottom + top);
+    let top_view = if plane {
+        Some(picture(x, y, step, step, &|a, b| (Point::um(a, b), mid))?)
+    } else {
+        None
+    };
+    if !at.is_finite() {
+        return Err(format!("the cut must be at a finite {normal}"));
+    }
+    // a 2D model (by the effective index method) solves no cut: its plane is all it sees
+    let flat = compute.fdtd == Some(2) || (fdfd && !three);
+    let cut = if flat {
+        None
+    } else if normal == "x" {
+        Some(picture(y, z, step, step_z, &|a, b| (Point::um(at, a), b))?)
+    } else {
+        Some(picture(x, z, step, step_z, &|a, b| (Point::um(a, at), b))?)
+    };
+    let coarser = [top_view.as_ref().map(|t| t.1), cut.as_ref().map(|c| c.1)]
+        .into_iter()
+        .flatten()
+        .fold(1.0, f64::max);
+    Ok(Solved {
+        top: top_view.map(|t| t.0),
+        cut: cut.map(|c| c.0),
+        step_nm: step * 1e3,
+        step_z_nm: if flat { step * 1e3 } else { step_z * 1e3 },
+        coarser,
+        note,
+    })
+}
+
+/// The design as the solver sees it.
+#[tauri::command(async)]
+pub fn device_solved(
+    spec: SpecIn,
+    compute: ComputeIn,
+    normal: String,
+    at: f64,
+) -> Result<Solved, String> {
+    solved(&spec, &compute, &normal, at)
+}
+
 // ---- saved designs ----
 
 /// A design saved as a job file.
@@ -886,6 +1337,9 @@ pub struct Saved {
     name: String,
     path: String,
     about: String,
+    /// The whole text, when the job computes the design (it has a task): the page's Simulate
+    /// tab opens on it.
+    job: Option<String>,
 }
 
 /// The job file's text for `spec` under `name`, checked as the library checks a job.
@@ -952,11 +1406,13 @@ pub fn read_device(path: String) -> Result<Saved, String> {
         .map_err(|e| format!("{path}: {e}"))?
         .replace("\r\n", "\n");
     let (spec, name, about) = read_text(&text)?;
+    let computes = Job::parse(&text).is_ok_and(|j| !j.task().is_empty());
     Ok(Saved {
         spec,
         name,
         path,
         about,
+        job: computes.then_some(text),
     })
 }
 
