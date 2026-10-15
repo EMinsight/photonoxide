@@ -942,6 +942,13 @@ pub fn cases() -> Vec<Case> {
             run: fdtd_cpml_thickness,
         },
         Case {
+            id: "fdtd/cpml-late-growth",
+            title: r"FDTD over 1500 µm/c ($10^5$ steps) with a guide running into its CPMLs: a strip of $\varepsilon = 6$, $0.3 \times 0.3$ µm, in vacuum ($72 \times 40 \times 40$ cells of 25 nm, CPMLs of 12 cells, Courant number 0.99), lit from a dipole off its axes by a differentiated Gaussian 0.03 µm/c wide, which lights the grid's own waves: the largest ratio of the fields' energy to its value 500 µm/c before",
+            tier: Tier::Analytic,
+            source: r"a passive system's energy only falls once its source has ended. On cells of 50 nm (CPMLs of 6, as thick) this strip's grows as $e^{0.066 ct}$ (4.4e14 by this measure; lit by a pulse at 1 c/µm, it falls for 300 µm/c first), at 3.0 c/µm, 2.7 cells a wavelength in its core: a wave of the grid, which a PML amplifies if its phase and group velocities point opposite ways along it (P.-R. Loh, A. F. Oskooi, M. Ibanescu, M. Skorobogatiy, S. G. Johnson, Phys. Rev. E 79, 065601 (2009), doi:10.1103/PhysRevE.79.065601). On cells of 25 and 12.5 nm it decays (docs/methods/fdtd.md, Late growth); measured 0.62",
+            run: fdtd_cpml_late_growth,
+        },
+        Case {
             id: "fdtd/spectrum",
             title: r"FDTD's sources normalized: a Gaussian pulse from an electric point current and from a magnetic dipole between values, in a closed box of a lossy medium ($16 \times 14 \times 12$ cells of 50 nm, $\varepsilon = 2.1$, $\sigma = 2$/µm), E's DFT at the carrier (1.55 µm) and 0.12 c/µm off it against `Solver3d`'s field for the sources' own transforms at the leapfrog's frequency (largest field difference relative to the largest field shown)",
             tier: Tier::Analytic,
@@ -2114,6 +2121,32 @@ fn fdtd_cpml_thickness() -> Outcome {
         expected: 0.0,
         // measured 6.1e-6: −104 dB
         tolerance: 1e-4,
+        error: measured,
+    }
+}
+
+fn fdtd_cpml_late_growth() -> Outcome {
+    use crate::fdtd::{Cpml, checks};
+    // 1500 µm/c
+    let strip = checks::late_strip(
+        0.025,
+        12,
+        Cpml::default(),
+        checks::late_broadband(),
+        104_973,
+    );
+    // blocks of 50 µm/c: each over the one ten before it
+    let measured = strip
+        .energy
+        .windows(11)
+        .map(|w| w[10] / w[0])
+        .fold(0.0, f64::max);
+    Outcome {
+        measured,
+        expected: 0.0,
+        // falling throughout, the grid's waves at 7 c/µm and a static remnant slowly (on cells
+        // of 50 nm, 4.4e14)
+        tolerance: 1.0,
         error: measured,
     }
 }
