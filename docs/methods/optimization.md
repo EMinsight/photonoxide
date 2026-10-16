@@ -83,7 +83,11 @@ g = (value − bound) or (bound − value) is met when g ≤ 0; the violation is
 MZI arm's phase, whose power's period in its length is 0.4 µm), sample by sample before the
 reduction (whose worst case has kinks where the worst sample changes). A variable whose
 derivatives all agree to 10⁻⁶ (relative, with a floor of 10⁻¹⁰ of the quantity) uses them; one
-that doesn't is differenced instead. The run records every check.
+that doesn't is differenced instead. A quantity that disagrees is checked again at steps 10 and
+100 times smaller: a chip's ring resonance can be sharp on the first step's scale (a bus coupler's
+length moves the ring's phase), and the differences' own error falls as the step's fourth power,
+so an exact derivative is refused only where no step confirms it. The run records every check,
+at the step that decided it.
 
 ## The optimize job
 
@@ -206,7 +210,7 @@ same objectives for `Circuit::gradient`: `power_db`, and `worst` and `average` o
 of any one-matrix objective; the validation case `chip/adjoint` checks the job's gradient of a
 worst loss in dB against them.
 
-**A co-design.** `examples/optimize_chip_rings.rs` runs a chip's `optimize` job:
+**A co-design.** `examples/optimize_chip_rings.rs` runs the chip job `jobs/chip-little-rings.toml`:
 two rings, each two lossless half-circle bends between directional couplers (analytic), the rings'
 coupler's gap and each ring's radius fitted by L-BFGS-B until the drop port is the Butterworth
 shape over ±3κ_b² of round-trip phase. The rings' coupling comes out κ₁²/κ_b⁴ = 0.250023 at

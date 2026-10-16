@@ -377,6 +377,10 @@ pub fn jobs() -> Vec<JobExample> {
             "ring-pareto.toml",
             include_str!("../../../jobs/ring-pareto.toml"),
         ),
+        (
+            "chip-little-rings.toml",
+            include_str!("../../../jobs/chip-little-rings.toml"),
+        ),
     ]
     .into_iter()
     .map(|(file, text)| JobExample {
