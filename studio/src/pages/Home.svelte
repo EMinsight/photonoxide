@@ -10,7 +10,7 @@
   import { ago, api, duration, KINDS, type Home } from "../lib/api";
   import { app, go, newCustom, openCustom, run, showCases, showPublished, startRun } from "../lib/app.svelte";
   import { catalog, loadCatalog } from "../lib/catalog.svelte";
-  import { openRunItem } from "../lib/device.svelte";
+  import { openDeviceText, openRunItem } from "../lib/device.svelte";
   import { showChip } from "../lib/chip.svelte";
   import type { Kind } from "../lib/job";
 
@@ -61,7 +61,7 @@
           <p class="mb-2 flex items-center gap-2 text-sm font-medium text-primary"><Sparkles size={15} /> {greeting}</p>
           <h2 class="text-3xl font-semibold tracking-tight">Validated photonics, live.</h2>
           <p class="mt-3 text-[15px] leading-relaxed muted">
-            Mode solvers and FDFD whose every result is checked against exact solutions and published papers. Start from a template or build your own, watch it run in 3D, and overlay it on the last one.
+            Mode solvers and FDFD whose every result is checked against exact solutions and published papers. Start from a template or build your own, watch it run in 3D, and sweep it or compare it with the last one.
           </p>
           <div class="mt-6 flex flex-wrap gap-2.5">
             <div class="dropdown">
@@ -116,8 +116,9 @@
               about={j.about}
               text={j.text}
               onrun={() => startRun(() => api.runText(j.text), `Running ${j.name}`)}
-              onopen={() => {
-                openCustom(j.text);
+              onopen={async () => {
+                // a device's job on its device's page, any other in the Custom device
+                if (!(await openDeviceText(j.text))) openCustom(j.text);
               }}
             />
           {:else}
