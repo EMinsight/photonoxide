@@ -176,7 +176,11 @@ library as a Rust program would. Both steps are tested:
   published values: the book's slab (`mode/slab-te-book`, 2.84482 against Chrostowski and
   Hochberg's 2.845), a ring's free spectral range against Bogaerts et al.'s Eq. 9
   (`circuit/ring-fsr-bogaerts`, 9.08149 nm), an MZI against its transfer matrices, silicon
-  against Li's table.
+  against Li's table;
+- [`python/examples`](../python/examples) has Python versions of a few of the Rust examples
+  (silicon's index, the book's slab and strip, a ring's free spectral range), each checked
+  against its paper as the Rust ones are; those with a Rust twin print what it prints, line
+  for line (`python/tests/test_examples.py`).
 
 The bits are the same for the same build on the same machine; another CPU or another build of
 photonoxide can differ in the last bits, as it can in Rust.
@@ -211,7 +215,8 @@ plot(s.wavelength_um, abs(s.s(:, 3, 1)).^2)    % from in1 to out1
 The wrappers: `photonoxide.version`, `materials`, `refractive_index`, `group_index`,
 `slab_modes`, `vector_modes`, `run_job`, `fdfd_s_parameters`, `circuit_spectrum`,
 `read_touchstone`, `write_touchstone`, `devices`, `device_spectrum`, `device_derived`,
-`device_geometry` and `device_job`, each with its help (`help photonoxide.vector_modes`).
+`device_geometry` and `device_job`, each with its help (`help photonoxide.vector_modes`);
+[docs/matlab.md](matlab.md) is their reference, written from that help.
 They take MATLAB's arrays and name-value arguments and return MATLAB arrays and structs:
 
 - arrays keep the Python package's shapes and indexing, so a field is `ny`-by-`nx` and
