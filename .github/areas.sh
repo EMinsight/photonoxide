@@ -185,7 +185,7 @@ area bench \
 # photonoxide-native: the external libraries' backends
 area native \
   "native/*" \
-  "sparse fdfd" \
+  "sparse fdfd export job" \
   "" "" "" \
   "bench"
 

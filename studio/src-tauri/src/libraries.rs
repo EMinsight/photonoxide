@@ -19,7 +19,7 @@ use std::time::{Duration, Instant};
 
 use photonoxide::backend::{self, Listed, Threads};
 use photonoxide_native::{
-    Candidate, Discovery, Spec, Status, accelerate, blas, intel, mumps, nvidia, superlu,
+    Candidate, Discovery, Spec, Status, accelerate, blas, intel, mumps, nvidia, superlu, zstd,
 };
 use serde::Serialize;
 
@@ -83,6 +83,8 @@ const UBUNTU: &str = "ubuntu-24.04";
 const UBUNTU_22: &str = "ubuntu-22.04";
 const WINDOWS: &str = "windows-2025-vs2026";
 const MACOS: &str = "macos-latest (Apple silicon)";
+/// The day Zstandard's installs were checked.
+const ZSTD_DAY: &str = "2026-10-23";
 
 /// What to know about a library before installing it.
 #[derive(Clone, Copy, Debug, Serialize)]
@@ -726,6 +728,74 @@ pub const GUIDES: &[Guide] = &[
         )],
         built_in: false,
     },
+    Guide {
+        library: "Zstandard",
+        about: "Zstandard's compression (Collet and Kucherawy, RFC 8878), the reference library libzstd, release 1.4 or later: a job's [task.export] compression = \"zstd\" compresses its exported .npz files with it, each member one frame (ZIP method 93, which Python's zipfile and so NumPy read from Python 3.14). Deflate, photonoxide's own, stays the default and needs nothing. The same frames from the same library on every run.",
+        provides: &["the exported files' compression"],
+        backends: &[],
+        needs: &[],
+        licence: "BSD-3-Clause or GPL-2.0, at your choice",
+        licence_url: "https://github.com/facebook/zstd/blob/dev/LICENSE",
+        download: "https://github.com/facebook/zstd/releases",
+        installs: &[
+            Install {
+                id: "conda-forge",
+                manager: "conda-forge",
+                command: "conda install -c conda-forge zstd",
+                systems: &["windows", "linux", "macos"],
+                note: "Into the active conda environment: start photonoxide from it. Many environments have it already, as a dependency.",
+                checked: &[
+                    Checked {
+                        system: "linux",
+                        image: UBUNTU,
+                        date: ZSTD_DAY,
+                        installed: "zstd 1.5.7",
+                        found: "Zstandard 1.5.7, and its tests: an exported .npz read back to the bytes of photonoxide's own",
+                    },
+                    Checked {
+                        system: "macos",
+                        image: MACOS,
+                        date: ZSTD_DAY,
+                        installed: "zstd 1.5.7",
+                        found: "Zstandard 1.5.7, and its tests: an exported .npz read back to the bytes of photonoxide's own",
+                    },
+                ],
+            },
+            Install {
+                id: "apt",
+                manager: "apt",
+                command: "sudo apt-get install libzstd1",
+                systems: &["linux"],
+                note: "Debian's and Ubuntu's package, on most systems already: 1.5.5 on Ubuntu 24.04, 1.4.8 on 22.04.",
+                checked: &[
+                    Checked {
+                        system: "linux",
+                        image: UBUNTU,
+                        date: ZSTD_DAY,
+                        installed: "libzstd1 1.5.5",
+                        found: "Zstandard 1.5.5, and its tests: an exported .npz read back to the bytes of photonoxide's own",
+                    },
+                    Checked {
+                        system: "linux",
+                        image: UBUNTU_22,
+                        date: ZSTD_DAY,
+                        installed: "libzstd1 1.4.8",
+                        found: "Zstandard 1.4.8, and its tests: an exported .npz read back to the bytes of photonoxide's own",
+                    },
+                ],
+            },
+            Install {
+                id: "brew",
+                manager: "brew",
+                command: "brew install zstd",
+                systems: &["macos"],
+                note: "Into Homebrew's lib folder (/opt/homebrew/lib, /usr/local/lib on Intel), where photonoxide looks.",
+                checked: &[],
+            },
+        ],
+        unsupported: &[],
+        built_in: false,
+    },
 ];
 
 /// The libraries the plan names that photonoxide has no backend for yet (docs/plans/backends.md):
@@ -763,6 +833,7 @@ fn spec(library: &str) -> Option<&'static Spec> {
         &blas::OPENBLAS,
         &blas::AOCL,
         &blas::ARMPL,
+        &zstd::ZSTD,
     ]
     .into_iter()
     .find(|s| s.name == library)
