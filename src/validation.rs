@@ -19,6 +19,7 @@ use num_complex::Complex64;
 use crate::circuit::components::checks as components;
 use crate::material::catalogue::checks as catalogue;
 use crate::material::catalogue::conductivity_checks;
+use crate::material::catalogue::phase_change_checks;
 use crate::material::catalogue::thermo_checks;
 use crate::material::{self, Model, Table};
 use crate::mode::Polarization;
@@ -242,6 +243,83 @@ pub fn cases() -> Vec<Case> {
             tier: Tier::Analytic,
             source: r"the midpoint rule's error is $\frac{h^2}{24} \int_0^1 f''$ to leading order, its integrand smooth on $[0, 1]$",
             run: conductivity_checks::sondheimer_order,
+        },
+        Case {
+            id: "material/pcm-delaney-fits",
+            title: r"Phase-change materials: our two-term Sellmeier fits to Delaney et al.'s ellipsometry of amorphous and crystalline Sb₂Se₃ and Sb₂S₃ (with crystalline Sb₂Se₃'s $k$ from the data), against the data at 1.0, 1.31, 1.55 and 1.69 µm (1.2 µm for crystalline Sb₂Se₃): the largest deviation in $n$ or $k$ (shown)",
+            tier: Tier::Published,
+            source: "M. Delaney et al., Adv. Funct. Mater. 30, 2002447 (2020), doi:10.1002/adfm.202002447, Fig. 3, its data set doi:10.5258/SOTON/D1247 (3_ellipsometry); the fits stay within 8.2e-5 of all 198 (143) points of each range",
+            run: phase_change_checks::transparent_fits,
+        },
+        Case {
+            id: "material/pcm-delaney-fits-gst",
+            title: r"Phase-change materials: our two-oscillator Lorentz fits to Delaney et al.'s ellipsometry of amorphous and crystalline Ge₂Sb₂Te₅, against the data at 1.0, 1.31, 1.55 and 1.69 µm: the largest deviation in $n$ or $k$ (shown)",
+            tier: Tier::Published,
+            source: "M. Delaney et al., Adv. Funct. Mater. 30, 2002447 (2020), doi:10.1002/adfm.202002447, Fig. 3, its data set doi:10.5258/SOTON/D1247; the fits stay within 2.5e-3 of all 198 points",
+            run: phase_change_checks::gst_fits,
+        },
+        Case {
+            id: "material/pcm-delaney-contrast",
+            title: r"Phase-change materials: the index contrast at 1550 nm, crystalline less amorphous, of the fits to Delaney et al.'s data (Sb₂Se₃ 0.764, Sb₂S₃ 0.590) against the abstract's $\Delta n = 0.77$ and $0.60$: the larger deviation (shown)",
+            tier: Tier::Published,
+            source: "M. Delaney et al., Adv. Funct. Mater. 30, 2002447 (2020), doi:10.1002/adfm.202002447, the abstract; within 0.015: Table 1's 4.050 − 3.285 = 0.765 rounds to 0.77, and its 3.308 − 2.712 = 0.596 to 0.60, its amorphous Sb₂S₃ at 1550 nm 0.0065 below the data set's",
+            run: phase_change_checks::contrast,
+        },
+        Case {
+            id: "material/pcm-delaney-table-1",
+            title: r"Phase-change materials: the fits to Delaney et al.'s data against their Table 1 at 1060, 1310 and 1550 nm (crystalline Sb₂Se₃ from 1310 nm), 11 values to its three decimals; Table 1's amorphous Sb₂S₃ at 1550 nm, 2.712, is 0.0065 below the data set's own and left out (largest deviation shown)",
+            tier: Tier::Published,
+            source: "M. Delaney et al., Adv. Funct. Mater. 30, 2002447 (2020), doi:10.1002/adfm.202002447, Table 1",
+            run: phase_change_checks::table_1,
+        },
+        Case {
+            id: "material/pcm-delaney-losses",
+            title: r"Phase-change materials: the crystalline films' propagation loss on a 500 nm silicon rib, the slope of a least-squares line through Delaney et al.'s insertion losses for PCM lengths of 0 to 800 µm (Sb₂Se₃ 0.0096, Sb₂S₃ 0.0288 dB/µm), against the paper's 0.01 and 0.028 dB/µm: the larger relative deviation (shown)",
+            tier: Tier::Published,
+            source: "M. Delaney et al., doi:10.1002/adfm.202002447, Section 2.5 and Fig. 7a,b, its data set doi:10.5258/SOTON/D1247 (6_SWG_losses); 5 %, the paper's one and two digits",
+            run: phase_change_checks::losses,
+        },
+        Case {
+            id: "material/pcm-delaney-fom",
+            title: r"Phase-change materials: Delaney et al.'s figure of merit $2\pi\thinspace\Delta n_\mathrm{eff}/(\lambda\alpha)$ (their Eq. (1)) from their $\Delta n_\mathrm{eff}$ of 0.0717 (Sb₂Se₃) and 0.0356 (Sb₂S₃) for a 25 nm film on the rib and the losses of material/pcm-delaney-losses (30.3 and 5.01 rad/dB), against their 29.0 and 5.15 rad/dB: the larger relative deviation (shown)",
+            tier: Tier::Published,
+            source: "M. Delaney et al., doi:10.1002/adfm.202002447, Section 2.5 and Eq. (1); 5 %, the losses' rounding. Their $\\Delta n_\\mathrm{eff}$ isn't recomputed: the paper gives neither the rib's etch depth nor the polarization",
+            run: phase_change_checks::figures_of_merit,
+        },
+        Case {
+            id: "material/pcm-delaney-lossless",
+            title: r"Phase-change materials: the largest $k$ at 1550 nm of amorphous Sb₂Se₃ and both states of Sb₂S₃ in the fits to Delaney et al.'s data, against the abstract's $k \lt 10^{-5}$ (shown); crystalline Sb₂Se₃'s data gives $2.1 \times 10^{-4}$",
+            tier: Tier::Published,
+            source: "M. Delaney et al., Adv. Funct. Mater. 30, 2002447 (2020), doi:10.1002/adfm.202002447, the abstract; the data set's 3_ellipsometry",
+            run: phase_change_checks::lossless,
+        },
+        Case {
+            id: "material/pcm-sb2se3-crystallization",
+            title: r"Sb₂Se₃'s crystallization temperature from Delaney et al.'s anneals (in steps of 25 °C, the first after which $n$ at 1551 nm stands past half its jump: 200 °C), against the 473 K Lawson et al.'s photothermal model takes (K shown)",
+            tier: Tier::Published,
+            source: "M. Delaney et al., doi:10.1002/adfm.202002447, Section 3 (200 °C), and its data set (doi:10.5258/SOTON/D1247), S1_ellipsometry; D. Lawson et al., J. Opt. 24, 064013 (2022), doi:10.1088/2040-8986/ac5ece, Fig. 2's caption; within the anneals' step",
+            run: phase_change_checks::sb2se3_crystallization,
+        },
+        Case {
+            id: "material/pcm-sb2s3-crystallization",
+            title: r"Sb₂S₃'s crystallization temperature from Delaney et al.'s anneals (in steps of 10 °C: partly crystalline after 260 °C, crystalline after 270 °C), the catalogue's (K shown)",
+            tier: Tier::Published,
+            source: "M. Delaney et al., doi:10.1002/adfm.202002447, Section 3 (270 °C), and its data set (doi:10.5258/SOTON/D1247), S1_ellipsometry; within the anneals' step",
+            run: phase_change_checks::sb2s3_crystallization,
+        },
+        Case {
+            id: "material/pcm-slab-closed-form",
+            title: r"Both states of a 300 nm Sb₂Se₃ slab on silica under air, TE₀ at 1550 nm (the fits' indices, 3.2853 and 4.0497): the finite-difference slab (mode::slab_fd) at 2.5 nm against the closed form, the larger error in $n_\mathrm{eff}$ (shown)",
+            tier: Tier::Analytic,
+            source: r"the asymmetric slab's TE dispersion relation (mode::slab); the scheme is second order with the faces on nodes",
+            run: phase_change_checks::slab_closed_form,
+        },
+        Case {
+            id: "material/pcm-slab-order",
+            title: r"The crystalline Sb₂Se₃ slab's order of convergence from 10 to 5 nm against the closed form (shown)",
+            tier: Tier::Analytic,
+            source: "the scheme's second order (mode::slab_fd)",
+            run: phase_change_checks::slab_order,
         },
         Case {
             id: "material/linbo3-zelmon-633",

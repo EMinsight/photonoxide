@@ -160,6 +160,74 @@ media a job gives no value ([static](static.md#as-a-job)).
   (doi:10.1103/PhysRev.134.A1058), silicon from 3 K to the melting point, isn't open; Ho et al.'s
   recommended values, a review of the measurements, stand in for it.
 
+## Phase-change materials
+
+Sb₂Se₃, Sb₂S₃ and GST (Ge₂Sb₂Te₅) are in the catalogue in both states, each state its own entry
+(category `phase-change`: `sb2se3-amorphous`, `sb2se3-crystalline`, …), so a job takes a state as
+it takes any material. `catalogue::phase_change("sb2se3")` holds the pair and what switches it:
+the crystallization and melting temperatures, the conductivity, the specific heat and the density
+($\rho c_p$ by `PhaseChange::heat_capacity`), each a `Constant` with its source; what has no source
+yet is in `PhaseChange::missing`.
+
+**Indices.** Delaney et al. 2020 (doi:10.1002/adfm.202002447) measured all six by ellipsometry,
+and their data set (doi:10.5258/SOTON/D1247, CC BY 4.0) gives n and k from 194 to 1693 nm. The
+catalogue's models are our own least-squares fits to it, the coefficients ours:
+
+| State | Model | Range (µm) | At 1550 nm | Fit within |
+|---|---|---|---|---|
+| Sb₂Se₃, amorphous | two-term Sellmeier | 1.0–1.69 | 3.2853 | 8.2e-5 |
+| Sb₂Se₃, crystalline | two-term Sellmeier, k from the data at ten wavelengths | 1.201–1.689 | 4.0497 + 2.1e-4 i | 1.5e-5 (n) |
+| Sb₂S₃, amorphous | two-term Sellmeier | 1.0–1.69 | 2.7185 | 7.9e-6 |
+| Sb₂S₃, crystalline | two-term Sellmeier | 1.0–1.69 | 3.3082 | 4.7e-5 |
+| GST, amorphous | two Lorentz oscillators | 1.0–1.69 | 4.352 + 0.061 i | 1.4e-3 (n), 2.3e-3 (k) |
+| GST, crystalline | two Lorentz oscillators | 1.0–1.69 | 7.913 + 1.031 i | 1.7e-3 (n), 2.5e-3 (k) |
+
+The fits hold over their ranges only: some terms have negative strengths, standing for the data's
+curvature there, not for a resonance. All are room-temperature films (the data set states no
+temperature). GST also has Frantz et al. 2023's table (doi:10.1364/OME.506019, through
+refractiveindex.info, CC0, every 15th row from 0.99 to 1.71 µm), another film: its crystalline
+6.46 + 0.92i at 1550 nm against Delaney's 7.91 + 1.03i.
+
+Against the paper (read in full): Table 1 gives n at 633 to 1550 nm, which the fits meet to its
+three decimals at 1060, 1310 and 1550 nm, but for amorphous Sb₂S₃ at 1550 nm, where the table's
+2.712 lies 0.0065 below the data set's own 2.7185. Its contrasts, 4.050 − 3.285 = 0.765 and 3.308
+− 2.712 = 0.596, are the abstract's 0.77 and 0.60. The data's k is 0 for amorphous Sb₂Se₃ and
+both Sb₂S₃ states; crystalline Sb₂Se₃'s is 2.1e-4 at 1550 nm (Table 1 prints 0), above the
+abstract's k < 10⁻⁵. The films were 40 nm, sputtered and capped with 200 nm of ZnS:SiO₂.
+
+The paper's figure of merit (its Eq. (1)), `catalogue::figure_of_merit`, is the
+phase per dB of loss, $2\pi\Delta n_\mathrm{eff}/(\lambda\alpha)$, with α the loss in the lossier
+(crystalline) state. On a 500 nm silicon rib with a 25 nm film, α is the slope of the insertion
+loss against the film's length (Fig. 7a, b): a line through the data set's means gives 0.0096
+(Sb₂Se₃) and 0.0288 dB/µm (Sb₂S₃), the paper's 0.01 and 0.028; with its $\Delta n_\mathrm{eff}$ of
+0.0717 and 0.0356 the figure is 30.3 and 5.01 rad/dB, its 29.0 and 5.15. The paper doesn't give
+the rib's etch depth, how far the film covers it, or the polarization, so its $\Delta
+n_\mathrm{eff}$ isn't recomputed here: on the rib geometries tried, the full-vector solver's
+falls short of it by a fifth or more.
+
+A partly crystallized film is the linear effective medium of its two states' permittivities,
+`partly_crystalline(amorphous, crystalline, f, λ)`, as Frantz et al. fit GST's intermediate
+states (their Section 4.2).
+
+**Switching.**
+
+| | Sb₂Se₃ | Sb₂S₃ | GST |
+|---|---|---|---|
+| $T_c$ | 473 K: 200 °C (Delaney, Section 3; its anneals amorphous after 175 °C, crystalline after 200 °C); Lawson et al. 2022's model takes 473 K | 543 K: 270 °C (Delaney, Section 3; partly crystalline after 260 °C) | 423 K: about 150 °C to rock salt at 1.6 K/min, 350 °C to hexagonal (Friedrich et al. 2000) |
+| $T_m$ | 884 K, the value Lawson et al.'s model takes | coming | coming |
+| $\kappa$ | 1 W/(m·K) both states, Lawson et al.'s model's | coming | 0.19 amorphous, 0.57 rock salt (1.58 hexagonal), W/(m·K) at 27 °C (Lyeo et al. 2006) |
+| $c_p$ | 507 J/(kg·K) at 105 °C, rising to 574 at 260 °C (Černošková et al. 2014, an amorphous film by DSC) | coming | coming |
+| $\rho$ | 5849 kg/m³, from Efthimiopoulos et al. 2013's volume per formula unit, 136.4 Å³ | coming | coming |
+
+Lawson et al.'s model takes $c_p$ = 0.15 J/(g·K) from Černošková et al., but that is the paper's
+estimate of the change of $c_p$ at a glass transition; its measured $c_p$ is 0.507 to 0.574
+J/(g·K), which the catalogue takes. Their κ of 1 W/(m·K) cites Li et al. 2019, whose
+zone-melted alloys reach only Sb₂Te₀.₆Se₂.₄ (0.8 to 0.93 W/(m·K)); a measurement of Sb₂Se₃ films
+is still to be found. A film crystallizes when held above $T_c$ long enough (milliseconds for
+Sb₂Se₃ by Lawson et al.; the kinetics aren't modelled) and is amorphized when it melts and is
+quenched; latent heat doesn't change when a film first reaches $T_m$, so the switching
+thresholds need none.
+
 ## Tags
 
 The point group is written in both notations, Hermann–Mauguin with overbars and Schoenflies:
