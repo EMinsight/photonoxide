@@ -113,7 +113,7 @@ A `Device` has seven methods:
 | `component(values, fidelity)` | a `Built`: the boxed component, the values of its own parameters, their derivatives, and the figures |
 | `derived(values, fidelity)` | the figures: n_eff, n_g, the cross-over length, the free spectral range, Q, a bend's loss, each a `Figure` with its fidelity and grid |
 
-From Python and MATLAB, the same methods are functions of the device's kind, its values given
+From Python, the same methods are functions of the device's kind, its values given
 as numbers in their units (those left out at their defaults): `devices` gives every device's
 kind, parameters, models and ports; `device_spectrum` the component's S-matrices at a fidelity,
 with the model's grid and source; `device_derived` the figures; and `device_geometry` the
@@ -133,15 +133,6 @@ cross = np.abs(dc.s[:, 2, 0]) ** 2   # from o1 into o3; dc.grid and dc.source na
 for f in phox.device_derived("directional coupler", **design):
     print(f.symbol, f.value, f.unit, f.grid)
 shapes = phox.device_geometry("directional coupler", values=design["values"])
-```
-
-```matlab
-values = struct("gap", 0.25, "length", 12.5);
-dc = photonoxide.device_spectrum("directional coupler", linspace(1.5, 1.6, 101), ...
-                                 values=values, fidelity="analytic");
-cross = abs(dc.s(:, 3, 1)).^2;       % from o1 into o3
-f = photonoxide.device_derived("directional coupler", values=values, fidelity="analytic");
-shapes = photonoxide.device_geometry("directional coupler", values=values);
 ```
 
 The **values** (`Values`) are the parameters' in their units, in order; `Values::new` takes
@@ -577,10 +568,6 @@ heater = phox.device_derived("thermo-optic phase shifter", values={"power": 12.5
 print({f.symbol: (round(f.value, 4), f.unit) for f in heater})   # P_pi, tau, f_3dB, X, ...
 ```
 
-```matlab
-f = photonoxide.device_derived("doped thermo-optic phase shifter", values=struct("power", 12.5));
-```
-
 ## Saved as a job
 
 A device's design is a job file with a `[device]` table in place of a task (`device::Spec`):
@@ -675,7 +662,7 @@ task:
 # model_2d = "fdfd"
 ```
 
-From Python and MATLAB, `device_job` writes the job `job::from_device` writes for a design, a
+From Python, `device_job` writes the job `job::from_device` writes for a design, a
 `"spectrum"` task at the device's own grids and band, as a component's Simulate tab does; and
 `run_job` runs it, or any job of this page by its file's path:
 
@@ -683,12 +670,6 @@ From Python and MATLAB, `device_job` writes the job `job::from_device` writes fo
 job = phox.device_job("directional coupler", values={"gap": 0.25}, fidelity="analytic",
                       name="narrow-coupler")   # a dict; format="yaml" gives the file's text
 run = phox.run_job(job)                        # run.dir, which photonoxide view replays
-```
-
-```matlab
-job = photonoxide.device_job("directional coupler", values=struct("gap", 0.25), ...
-                             fidelity="analytic", name="narrow-coupler");   % JSON text
-run = photonoxide.run_job(job);
 ```
 
 `job::check` refuses a grid a device doesn't take (a 3D FDFD's cells' height or an FDFD's
