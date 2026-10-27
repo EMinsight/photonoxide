@@ -79,6 +79,8 @@ pub struct Planned {
 }
 
 const DAY: &str = "2026-10-09";
+/// The day the Libraries workflow checked cuDSS 1.0, oneMKL 2026.2 and macOS 27 (#555).
+const RECHECKED: &str = "2026-10-27";
 const UBUNTU: &str = "ubuntu-24.04";
 const UBUNTU_22: &str = "ubuntu-22.04";
 const WINDOWS: &str = "windows-2025-vs2026";
@@ -202,16 +204,16 @@ pub const GUIDES: &[Guide] = &[
                     Checked {
                         system: "linux",
                         image: UBUNTU,
-                        date: DAY,
-                        installed: "mkl 2026.1.0",
-                        found: "oneMKL 2026.1, and the pardiso backend after its smoke test",
+                        date: RECHECKED,
+                        installed: "mkl 2026.2.0",
+                        found: "oneMKL 2026.2, and the pardiso backend after its smoke test",
                     },
                     Checked {
                         system: "windows",
                         image: WINDOWS,
-                        date: DAY,
-                        installed: "mkl 2026.1.0",
-                        found: "oneMKL 2026.1, and the pardiso backend after its smoke test",
+                        date: RECHECKED,
+                        installed: "mkl 2026.2.0",
+                        found: "oneMKL 2026.2, and the pardiso backend after its smoke test",
                     },
                 ],
             },
@@ -394,46 +396,46 @@ pub const GUIDES: &[Guide] = &[
             Install {
                 id: "conda",
                 manager: "conda-forge",
-                command: "conda install -c conda-forge libcudss=0.8",
+                command: "conda install -c conda-forge libcudss=1.0",
                 systems: &["windows", "linux"],
                 note: "Into the active conda environment: start photonoxide from it.",
                 checked: &[
                     Checked {
                         system: "linux",
                         image: UBUNTU,
-                        date: DAY,
-                        installed: "libcudss 0.8.0.10",
-                        found: "cuDSS 0.8.0, loaded; the runner has no GPU, so the backend's smoke test couldn't run",
+                        date: RECHECKED,
+                        installed: "libcudss 1.0.0.35",
+                        found: "cuDSS 1.0.0, loaded; the runner has no GPU, so the backend's smoke test couldn't run",
                     },
                     Checked {
                         system: "windows",
                         image: WINDOWS,
-                        date: DAY,
-                        installed: "libcudss 0.8.0.10",
-                        found: "cuDSS 0.8.0, loaded; the runner has no GPU, so the backend's smoke test couldn't run",
+                        date: RECHECKED,
+                        installed: "libcudss 1.0.0.35",
+                        found: "cuDSS 1.0.0, loaded; the runner has no GPU, so the backend's smoke test couldn't run",
                     },
                 ],
             },
             Install {
                 id: "pip",
                 manager: "pip",
-                command: "pip install \"nvidia-cudss-cu13==0.8.*\"",
+                command: "pip install \"nvidia-cudss-cu13==1.0.*\"",
                 systems: &["windows", "linux"],
-                note: "The CUDA 13 build (nvidia-cudss-cu12 for CUDA 12), found in site-packages/nvidia. Release 0.8: the next release's wheel (site-packages/nvidia/cu13, libcudss.so.1) isn't loaded yet.",
+                note: "The CUDA 13 build (nvidia-cudss-cu12 for CUDA 12), found in site-packages/nvidia/cu13; it brings NVRTC, which cuDSS 1.0 needs at load time. Release 0.x is found too.",
                 checked: &[
                     Checked {
                         system: "linux",
                         image: UBUNTU,
-                        date: DAY,
-                        installed: "nvidia-cudss-cu13 0.8.0.10",
-                        found: "cuDSS 0.8.0, loaded; the runner has no GPU, so the backend's smoke test couldn't run",
+                        date: RECHECKED,
+                        installed: "nvidia-cudss-cu13 1.0.0.35",
+                        found: "cuDSS 1.0.0, loaded; the runner has no GPU, so the backend's smoke test couldn't run",
                     },
                     Checked {
                         system: "windows",
                         image: WINDOWS,
-                        date: DAY,
-                        installed: "nvidia-cudss-cu13 0.8.0.10",
-                        found: "cuDSS 0.8.0, loaded; the runner has no GPU, so the backend's smoke test couldn't run",
+                        date: RECHECKED,
+                        installed: "nvidia-cudss-cu13 1.0.0.35",
+                        found: "cuDSS 1.0.0, loaded; the runner has no GPU, so the backend's smoke test couldn't run",
                     },
                 ],
             },
