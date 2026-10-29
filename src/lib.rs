@@ -11,6 +11,8 @@
 //!   differences of a cross-section, with bends, dispersion and loss.
 //! - [`fdfd`]: frequency-domain finite differences in 2D and 3D on Yee's grid, with PMLs, mode
 //!   ports, S-parameters and adjoint gradients.
+//! - [`eme`]: eigenmode expansion, a structure cut into uniform sections joined by their modes'
+//!   S-matrices: 2D slab stacks, with a PML.
 //! - [`circuit`]: components with ports and S-matrices, connected into netlists, solved as one
 //!   sparse system and differentiated by the circuit adjoint.
 //! - [`device`]: components that know their geometry: a stack, parameters (as expressions),
