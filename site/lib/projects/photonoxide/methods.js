@@ -41,6 +41,7 @@ export const CATEGORIES = [
     groups: [
       { title: "Frequency domain (FDFD)", slugs: ["fdfd", "fdfd-ports", "fdfd-3d", "averaging"] },
       { title: "Time domain (FDTD)", slugs: ["fdtd"] },
+      { title: "Eigenmode expansion", slugs: ["eme"] },
     ],
   },
   {
@@ -99,6 +100,7 @@ export const ALGORITHMS = [
   { name: "Diamond blocking", does: "several time steps per pass through memory", methods: ["fdtd"] },
   { name: "Effective index method", does: "a ridge's mode from two slabs", methods: ["eim"] },
   { name: "Finite volumes, conductances in series", does: "heat, potential and current on a graded grid, exact for layered media", methods: ["static"] },
+  { name: "Eigenmode expansion", does: "a structure cut into uniform sections, joined by their modes' S-matrices", methods: ["eme"] },
   { name: "Elliptical slices of quadrics", does: "a sphere's, an ellipsoid's or a cone's exact share of a cell", methods: ["bodies"] },
   { name: "GCRO-DR", does: "Krylov recycling across a sequence of solves", methods: ["recycling"] },
   { name: "Hadley's interface and corner equations", does: "high-order differences across interfaces and corners", methods: ["hadley"] },
