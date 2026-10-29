@@ -306,7 +306,13 @@ fn the_ports_are_the_components_and_sit_on_the_shapes() {
             .collect();
         let names: Vec<&str> = geometry.ports.iter().map(|p| p.name.as_str()).collect();
         assert_eq!(names, ports, "{}", device.kind());
-        let (_, bottom, top) = geometry.structure.stack().layer("Si").unwrap();
+        // the core: silicon, or the modulator's lithium niobate film
+        let core = if device.kind().contains("modulator") {
+            "LN"
+        } else {
+            "Si"
+        };
+        let (layer, bottom, top) = geometry.structure.stack().layer(core).unwrap();
         let mid = (bottom + top) / 2.0;
         for p in &geometry.ports {
             // just inside the port, the core; just outside, not
@@ -318,8 +324,8 @@ fn the_ports_are_the_components_and_sit_on_the_shapes() {
                 }
             };
             let inside = geometry.structure.material_at(step(0.01), mid);
-            assert_eq!(*inside, material::silicon(), "{} {}", device.kind(), p.name);
-            assert!(p.width.to_um() > 0.0 && p.layer == "Si");
+            assert_eq!(*inside, layer.material, "{} {}", device.kind(), p.name);
+            assert!(p.width.to_um() > 0.0 && p.layer == core);
         }
     }
 }
@@ -647,7 +653,8 @@ fn the_library_has_the_first_devices_each_with_its_models() {
             "Y-branch MZI",
             "thermo-optic phase shifter",
             "doped thermo-optic phase shifter",
-            "in-guide thermo-optic phase shifter"
+            "in-guide thermo-optic phase shifter",
+            "TFLN Mach-Zehnder modulator"
         ]
     );
     for d in library() {
@@ -659,7 +666,7 @@ fn the_library_has_the_first_devices_each_with_its_models() {
         };
         assert_eq!(methods[0].fidelity, first, "{}", d.kind());
         // the highest 3D, or the measured device for the active ones
-        let highest = if d.kind().contains("phase shifter") {
+        let highest = if d.kind().contains("phase shifter") || d.kind().contains("modulator") {
             Fidelity::Measured
         } else {
             Fidelity::ThreeD

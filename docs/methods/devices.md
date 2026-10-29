@@ -1,7 +1,7 @@
 ---
 title: "Devices"
 module: device
-summary: "A component that knows its geometry: a stack, the parameters of its shapes, its models from a fit to the solver up to 3D, and the component each gives, with every figure's fidelity and grid. The strip waveguide, bend, directional coupler and rings; the rib, the MMIs, the Y-branch and the MZIs, on custom stacks and partial etches; and the thermo-optic phase shifters, a metal heater, doped heaters and the guide heated itself, at analytic, 2D and measured fidelity, Jacques et al. 2019's and Harris et al. 2014's through them."
+summary: "A component that knows its geometry: a stack, the parameters of its shapes, its models from a fit to the solver up to 3D, and the component each gives, with every figure's fidelity and grid. The strip waveguide, bend, directional coupler and rings; the rib, the MMIs, the Y-branch and the MZIs, on custom stacks and partial etches; the thermo-optic phase shifters, a metal heater, doped heaters and the guide heated itself, at analytic, 2D and measured fidelity, Jacques et al. 2019's and Harris et al. 2014's through them; and the thin-film lithium niobate Mach-Zehnder modulator, its Vπ·L, insertion loss and electro-optic response from its travelling-wave electrode, Zhang et al. 2022's and Wang et al. 2018's through it."
 order: 22.5
 papers:
   - cite: "L. Chrostowski, M. Hochberg, Silicon Photonics Design, Cambridge University Press (2015)"
@@ -40,6 +40,18 @@ papers:
     doi: 10.1364/OE.22.010487
   - cite: "J. Abate, P. P. Valkó, Int. J. Numer. Methods Eng. 60, 979 (2004) (fixed Talbot, the in-guide heater's analytic time)"
     doi: 10.1002/nme.995
+  - cite: "Y. Zhang, L. Shao, J. Yang, Z. Chen, K. Zhang, K.-M. Shum, D. Zhu, C. H. Chan, M. Lončar, C. Wang, Photon. Res. 10, 2380 (2022) (the TFLN modulator's defaults, its loss tangents and response, measured)"
+    doi: 10.1364/PRJ.468518
+  - cite: "C. Wang, M. Zhang, B. Stern, M. Lipson, M. Lončar, Opt. Express 26, 1547 (2018) (a 2 mm TFLN modulator, measured)"
+    doi: 10.1364/OE.26.001547
+  - cite: "P. Kharel, C. Reimer, K. Luke, L. He, M. Zhang, Optica 8, 357 (2021) (a regular electrode's conductor loss, simulated and measured)"
+    doi: 10.1364/OPTICA.416155
+  - cite: "G. Ghione, C. Naldi, Electron. Lett. 20, 179 (1984) (the analytic modulator's partial capacitances)"
+    doi: 10.1049/el:19840120
+  - cite: "C. L. Holloway, E. F. Kuester, IEEE Trans. Microw. Theory Tech. 43, 2695 (1995) (the conductor loss)"
+    doi: 10.1109/22.477846
+  - cite: "G. Ghione, Semiconductor Devices for High-Speed Optoelectronics, Cambridge University Press (2009) (the travelling-wave response, Eq. 6.31)"
+    doi: 10.1017/CBO9780511635595
 validation:
   - device/library-components
   - device/ring-closed-forms
@@ -87,6 +99,15 @@ validation:
   - device/thermo-in-guide-measured
   - device/thermo-2d-grid
   - device/thermo-jobs
+  - device/tfln-analytic-vpil
+  - device/tfln-analytic-line
+  - device/tfln-zhang-vpil
+  - device/tfln-wang-vpil
+  - device/tfln-measured
+  - device/tfln-zhang-response
+  - device/tfln-kharel-loss
+  - device/tfln-2d-grid
+  - device/tfln-jobs
 ---
 
 A [component](components.md) maps its parameters to an S-matrix, and its physical inputs are
@@ -106,7 +127,8 @@ ring, all-pass and add-drop. Then the rest of the studio's library: the rib wave
 and 2 × 2 MMIs, the Y-branch, and the Mach–Zehnder interferometers of directional couplers and
 of Y-branches; and the waveguide and the coupler take ribs and sloped walls too. The first
 active devices follow: the thermo-optic phase shifters, a metal heater over a strip and doped
-heaters beside a rib, their phase following the heater's power.
+heaters beside a rib, their phase following the heater's power; and the thin-film lithium niobate
+Mach–Zehnder modulator, its phase following the voltage on its travelling-wave electrode.
 
 ## The abstraction
 
@@ -633,6 +655,104 @@ heater = phox.device_derived("thermo-optic phase shifter", values={"power": 12.5
 print({f.symbol: (round(f.value, 4), f.unit) for f in heater})   # P_pi, tau, f_3dB, X, ...
 ```
 
+## Thin-film lithium niobate Mach–Zehnder modulator
+
+`TflnModulator` (kind `"TFLN Mach-Zehnder modulator"`), P9's second active device: a balanced
+Mach–Zehnder interferometer on an x-cut lithium niobate film, its c axis across the guides, whose
+two rib arms sit in the gaps of a ground–signal–ground travelling-wave electrode and are driven in
+push and pull. Ports `o1` and `o2`. Its parameters, with Zhang et al. 2022's 5.8 mm modulator as
+the defaults:
+
+- the film `film` µm thick (0.6) on `buried` µm of oxide (2) over 500 µm of silicon (relative
+  permittivity `substrate_permittivity`, 11.7), etched to a `slab` µm slab (0.3);
+- the ribs `width` µm wide on top (1.2), their walls at `sidewall` degrees (70, which the paper
+  doesn't give);
+- the electrode: a signal `signal` µm wide (20), gaps of `gap` µm (5), grounds `ground` µm wide
+  (100, not given), `metal` µm thick (0.83) of `conductivity` MS/m (58, copper), `length` µm long
+  (5800), driven from a 50 Ω source and ended in `load` Ω (50);
+- `cladding` µm of oxide over the slab (0.6), its static permittivity `cladding_permittivity`
+  (5.5, the PECVD oxide of the paper's model), and air above;
+- the drive: `voltage` (V), `frequency` (GHz, 0 for DC) and `bias` (rad); and `loss` (dB/cm), the
+  light's propagation loss, which the models don't compute.
+
+Its **component** is the interferometer of ideal Y-branches: parameters `phase` (the arms'
+difference, rad) and `loss` (dB),
+$S_{21} = S_{12} = 10^{-\mathrm{IL}/20} \cos(\theta/2)$, $\theta = \varphi\lambda_0/\lambda$, with
+$\varphi = \pi V \lvert m(f) \rvert / V_\pi + \varphi_0$, $V_\pi = (V_\pi L)/L$ push–pull, $m(f)$
+the electrode's response (1 at DC), $\varphi_0$ the bias, IL the loss over the length (or a
+measured device's insertion loss) and $\lambda_0$ = 1550 nm, where the film's $r_{33}$ is given.
+The light the second Y-branch can't take into its guide is radiated; the arms' common phase,
+which a two-port's intensity doesn't see, is left out. Its derivatives in the voltage, the bias,
+the loss and (at DC) the length are exact. The figures, each with its fidelity and grid: `VpiL`
+(V·cm, push–pull), `Vpi` (V, DC), `Vpi_f` ($V_\pi/\lvert m(f) \rvert$ at the frequency), `m_dB`,
+`f_3dB` and `f_6dB` (GHz, referred to 1 GHz as Zhang et al. refer theirs), `n_rf`, `Z0` and
+`alpha_rf` (at the frequency, 1 GHz at DC), `alpha_c` (the conductor loss at 50 GHz over
+$\sqrt{50}$, dB cm⁻¹ GHz⁻½), `C` and `C_L` (the line's capacitance per centimetre and over the
+length), `n_eff`, `n_g`, `phi` and `IL`. $V_\pi L$ is a straight section's, per unit length: the
+bends and the Y-branches aren't in it.
+
+- **Analytic:** closed forms. The field at the centre of the gap between two coplanar
+  half-planes, $2V/(\pi g)$, taken uniform across the film, times its TE slab mode's confinement
+  in the film (the slab of the film between the buried oxide and the cladding or air, in closed
+  form), through the film's $r_{33}$; the group index from the slab's dispersion (1.54 and 1.56
+  µm). The coplanar line by conformal mapping: each layer's partial capacitance (Ghione & Naldi's
+  finite layers, layer on layer; lithium niobate's anisotropy by scaling its thickness by
+  $\sqrt{\varepsilon_\parallel/\varepsilon_\perp}$), the strips' thickness as parallel plates
+  across the gaps, the conductor loss by Holloway & Kuester's Eq. 12 on strips of zero thickness,
+  the dielectric loss by the layers' shares of the capacitance (Zhang et al.'s loss tangents);
+  the response by Ghione's Eq. 6.31. Its stated errors: $V_\pi L$ within 15% of the 2D model's,
+  the line's RF index and impedance within 10%, over a gap of 3.5 to 8 µm, ribs 0.9 to 2.0 µm
+  wide and a film 0.5 to 0.8 µm thick. Its bandwidths aren't stated: the RF index 8 to 9% high
+  puts the line's walk-off from the light at about twice the 2D model's, and its 3 dB bandwidth
+  at 0.32 to 0.41 of the 2D model's over the same range. Microseconds.
+- **2D:** P6's and P7's cross-sections ([electro-optic.md](electro-optic.md),
+  [travelling-wave.md](travelling-wave.md)): the static
+  solver's field in the film at 1 V, graded from 20 nm by 15% a cell to 1 µm, and the
+  full-vector mode's change by first-order perturbation on 20 nm cells, $V_\pi L$ push–pull
+  (`mode::pockels`); the group index from the modes at 1.54 and 1.56 µm; the quasi-TEM line from
+  the static solver's capacitances and the strips' current, graded from 4 nm to 20 µm over a half
+  section (`electro::line`), its γ and $Z_0$ and the response. The line is quasi-TEM to about 100
+  GHz; above it the bandwidths and the RF $V_\pi$ hold as the quasi-TEM line's (the full-wave RF
+  mode, `electro::full_wave`, moves Zhang et al.'s 3 dB bandwidths from 92 and 33 GHz to 84 and
+  31). A cross-section is solved once for a sweep of the voltage or the frequency.
+  `TflnModulator::with_refinement(r)` divides the grids by r, as the validation does.
+- **Measured:** a measured device's file (`device::Measurement`), at its design's values and at
+  DC only (a file gives $V_\pi L$ and bandwidths, not the response at each frequency): Zhang et
+  al.'s 5.8 and 10.8 mm modulators (`src/device/measured/zhang-2022-*.toml`: 2.3 V·cm at DC and
+  2.67 at 1 GHz; 3 dB bandwidths of 170 and 100 GHz, 6 dB of 295 and 175, RF $V_\pi$ of 8.3 and
+  7.3 V at 250 GHz), Wang et al.'s 2 mm one (`wang-2018.toml`: 9 V, 1.8 V·cm, 15 GHz, 2 dB on
+  chip), and Kharel et al.'s regular electrode, its conductor loss only (0.69 dB cm⁻¹ GHz⁻½);
+  `TflnModulator::with_measurement` adds one's own. A measured insertion loss is the component's.
+
+The static permittivities are lithium niobate's clamped ones (Jazbinšek & Zgonik) and thermal
+oxide's 3.9; the Pockels field's substrate is silicon's whatever `substrate_permittivity`. The
+loss tangents are Zhang et al.'s (silicon 0.013, lithium niobate 0.008, the oxides 0.006).
+
+At Zhang et al.'s design the 2D model gives 2.372 V·cm (2.370 gated by grids twice as fine)
+against their 2.3 at DC, an RF index of 2.473 and $Z_0$ = 45.46 Ω at 1 GHz, and, on grids twice
+as fine, the response at 250 GHz −5.04 and −8.12 dB from 1 GHz at 5.8 and 10.8 mm (an RF
+$V_\pi$ of 7.36 and 5.75 V against their 8.3 and 7.3): 0.9% and 16% above what their
+measurements give, (2.67 V·cm / L) / $V_\pi$(250 GHz). Its 3 dB bandwidths on its own grids, 91.7 and 32.6 GHz, are about half and a third
+of the measured 170 and 100 GHz; the same line in P7's cases leaves this open (#418), so the
+bandwidths aren't a case. At Wang et al.'s design it gives 1.841 V·cm (1.839 gated) against 1.8.
+Wang et al.'s electrode is a capacitor driven directly, not a travelling wave, so their 15 GHz
+isn't the device's bandwidth. On Kharel et al.'s regular electrode the device's line gives 0.796
+dB cm⁻¹ GHz⁻½ (gated) against their simulated 0.75 (Table 1). Their measured 0.69 is 8% below
+their own simulation, and ours is 15% above it, more than the conductor loss's uncertainty
+(12%), so the measurement isn't a case. He et al. 2019's modulator isn't a case either: with the film's $r_{33}$ its
+cross-section gives 2.87 V·cm push–pull against the 2.2 to 2.5 they measured, and which
+coefficient their film has isn't settled. `tfln_zhang` prints each fidelity at both of Zhang et
+al.'s lengths.
+
+```python
+import photonoxide as phox
+
+mzm = phox.device_derived(
+    "TFLN Mach-Zehnder modulator", values={"voltage": 2.0, "frequency": 40.0}
+)
+print({f.symbol: (round(f.value, 4), f.unit) for f in mzm})   # VpiL, Vpi, Vpi_f, m_dB, f_3dB, ...
+```
+
 ## Saved as a job
 
 A device's design is a job file with a `[device]` table in place of a task (`device::Spec`):
@@ -952,6 +1072,14 @@ its studies run here rather than on a farm's workers, who haven't the file.
 | `device/thermo-in-guide-measured` | its 2D $P_\pi$, gated, over the measured fidelity's (24.77 mW) | the same and half | 1.064 |
 | `device/thermo-2d-grid` | the 2D $P_\pi$ at the three fabricated designs on the devices' grids over twice as fine | the same and half | 1.00080 |
 | `device/thermo-jobs` | the three shifters at each fidelity as jobs against `Device::component`, figures and S-parameters | the same | 0 bits differ |
+| `device/tfln-analytic-vpil` | the modulator's analytic $V_\pi L$ over the 2D model's at seven designs over its validity (the ratio farthest from 1) | field 20 nm to 1 µm, mode 20 nm | 0.879 (15 %) |
+| `device/tfln-analytic-line` | the analytic line's RF index and $Z_0$ at 50 GHz over the 2D line's at the same designs | line 4 nm to 20 µm | 1.093 (10 %) |
+| `device/tfln-zhang-vpil`, `-wang-vpil` | Zhang et al.'s and Wang et al.'s $V_\pi L$ through the device, gated by grids twice as fine | the same and half | 2.370 and 1.839 V·cm (2.3 and 1.8 ± 0.15) |
+| `device/tfln-measured` | the 2D $V_\pi L$ at both designs, gated, over the measured fidelity's | the same and half | 1.031 (10 %) |
+| `device/tfln-zhang-response` | the response at 250 GHz over 1 GHz at 5.8 and 10.8 mm against their measured (2.67 V·cm / L) / RF $V_\pi$ | the same and half | +0.9 % and +16 % (20 %) |
+| `device/tfln-kharel-loss` | Kharel et al.'s regular electrode's conductor loss through the device, gated | the same and half | 0.796 (0.75 ± 12 %) |
+| `device/tfln-2d-grid` | the 2D figures at Zhang et al.'s design on the device's grids against twice as fine | the same and half | 4.8e-3 |
+| `device/tfln-jobs` | the modulator at each fidelity as jobs against `Device::component`, figures and S-parameters | the same | 0 bits differ |
 
 The Y-branch MZI has none: its 3D model's FDFD of its Y-branches is more than the direct solver
 holds here (7.3 million unknowns), as for the MMIs' and the Y-branch's own 3D models (#377). The

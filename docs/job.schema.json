@@ -2753,6 +2753,236 @@
               }
             }
           }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "TFLN Mach-Zehnder modulator"
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "then": {
+            "description": "A Mach-Zehnder modulator on thin-film lithium niobate: a travelling-wave electrode drives its two arms in push and pull, its Vpi L from the field in the film and the mode, its bandwidth from the line's index, impedance and loss.",
+            "properties": {
+              "parameters": {
+                "properties": {
+                  "bias": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "$ref": "#/$defs/Expression"
+                      }
+                    ],
+                    "description": "bias rad: 0 by default, from -1000 to 1000."
+                  },
+                  "buried": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "$ref": "#/$defs/Expression"
+                      }
+                    ],
+                    "description": "buried µm: 2 by default, from 0.5 to 5."
+                  },
+                  "cladding": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "$ref": "#/$defs/Expression"
+                      }
+                    ],
+                    "description": "cladding µm: 0.6 by default, from 0.05 to 5."
+                  },
+                  "cladding_permittivity": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "$ref": "#/$defs/Expression"
+                      }
+                    ],
+                    "description": "cladding_permittivity: 5.5 by default, from 1 to 10."
+                  },
+                  "conductivity": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "$ref": "#/$defs/Expression"
+                      }
+                    ],
+                    "description": "conductivity MS/m: 58 by default, from 1 to 70."
+                  },
+                  "film": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "$ref": "#/$defs/Expression"
+                      }
+                    ],
+                    "description": "film µm: 0.6 by default, from 0.3 to 1."
+                  },
+                  "frequency": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "$ref": "#/$defs/Expression"
+                      }
+                    ],
+                    "description": "frequency GHz: 0 by default, from 0 to 500."
+                  },
+                  "gap": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "$ref": "#/$defs/Expression"
+                      }
+                    ],
+                    "description": "gap µm: 5 by default, from 2 to 15."
+                  },
+                  "ground": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "$ref": "#/$defs/Expression"
+                      }
+                    ],
+                    "description": "ground µm: 100 by default, from 5 to 300."
+                  },
+                  "length": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "$ref": "#/$defs/Expression"
+                      }
+                    ],
+                    "description": "length µm: 5800 by default, from 100 to 100000."
+                  },
+                  "load": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "$ref": "#/$defs/Expression"
+                      }
+                    ],
+                    "description": "load Ω: 50 by default, from 1 to 1000000."
+                  },
+                  "loss": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "$ref": "#/$defs/Expression"
+                      }
+                    ],
+                    "description": "loss dB/cm: 0 by default, from 0 to 100."
+                  },
+                  "metal": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "$ref": "#/$defs/Expression"
+                      }
+                    ],
+                    "description": "metal µm: 0.83 by default, from 0.1 to 2."
+                  },
+                  "sidewall": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "$ref": "#/$defs/Expression"
+                      }
+                    ],
+                    "description": "sidewall °: 70 by default, from 45 to 90."
+                  },
+                  "signal": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "$ref": "#/$defs/Expression"
+                      }
+                    ],
+                    "description": "signal µm: 20 by default, from 2 to 100."
+                  },
+                  "slab": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "$ref": "#/$defs/Expression"
+                      }
+                    ],
+                    "description": "slab µm: 0.3 by default, from 0.05 to 0.9."
+                  },
+                  "substrate_permittivity": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "$ref": "#/$defs/Expression"
+                      }
+                    ],
+                    "description": "substrate_permittivity: 11.7 by default, from 1 to 20."
+                  },
+                  "voltage": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "$ref": "#/$defs/Expression"
+                      }
+                    ],
+                    "description": "voltage V: 0 by default, from -100 to 100."
+                  },
+                  "width": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "$ref": "#/$defs/Expression"
+                      }
+                    ],
+                    "description": "width µm: 1.2 by default, from 0.4 to 2.5."
+                  }
+                }
+              }
+            }
+          }
         }
       ],
       "description": "A device of the library (docs/methods/devices.md), computed at a fidelity, studied, fitted or optimized by the task.",
@@ -2789,7 +3019,8 @@
             "Y-branch MZI",
             "thermo-optic phase shifter",
             "doped thermo-optic phase shifter",
-            "in-guide thermo-optic phase shifter"
+            "in-guide thermo-optic phase shifter",
+            "TFLN Mach-Zehnder modulator"
           ]
         },
         "parameters": {

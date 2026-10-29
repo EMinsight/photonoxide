@@ -248,6 +248,7 @@ pub fn rules() -> Vec<(&'static str, Rule)> {
     rules.extend(geometry::rules());
     rules.extend(line::rules());
     rules.extend(devices::rules());
+    rules.extend(modulator::rules());
     rules
 }
 
@@ -2409,6 +2410,8 @@ pub fn cases() -> Vec<Case> {
     cases.extend(crate::thermal::correction_checks::cases());
     // and the thermo-optic phase shifters as devices, at analytic, 2D and measured fidelity
     cases.extend(crate::device::thermo_checks::cases());
+    // and the thin-film lithium niobate Mach-Zehnder modulator as a device
+    cases.extend(crate::device::tfln_checks::cases());
     cases
 }
 
@@ -5427,6 +5430,7 @@ mod gpu;
 mod line;
 mod materials;
 mod modes;
+mod modulator;
 #[cfg(feature = "gpu")]
 pub use gpu::gpu_report;
 
