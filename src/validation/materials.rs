@@ -311,6 +311,16 @@ pub(crate) fn rules() -> Vec<(&'static str, Rule)> {
             ),
         ),
         (
+            "material/tin-tsai-eq-3",
+            Rule::new(
+                Absolute,
+                Reference,
+                0.5,
+                Exact,
+                "the abstract's 45 µΩ·cm, printed whole: half a unit of it",
+            ),
+        ),
+        (
             "material/silicon-film-sondheimer-limits",
             Rule::new(
                 Relative,

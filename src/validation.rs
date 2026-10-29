@@ -22,6 +22,7 @@ use crate::material::catalogue::conductivity_checks;
 use crate::material::catalogue::ferroelectric;
 use crate::material::catalogue::phase_change_checks;
 use crate::material::catalogue::phase_change_thermal;
+use crate::material::catalogue::resistivity;
 use crate::material::catalogue::thermo_checks;
 use crate::material::{self, Model, Table};
 use crate::mode::Polarization;
@@ -504,6 +505,13 @@ pub fn cases() -> Vec<Case> {
             tier: Tier::Published,
             source: "M. Jacques et al., Opt. Express 27, 10456 (2019), doi:10.1364/OE.27.010456, Table 3 (their ref. 32: M. Asheghi et al., J. Heat Transfer 120, 30 (1998)); 5 %",
             run: conductivity_checks::film_220,
+        },
+        Case {
+            id: "material/tin-tsai-eq-3",
+            title: r"TiN's lowest-resistivity films (reactively sputtered, collimated, at 500 °C with −100 V of bias): Tsai et al.'s Eq. (3), $\rho = \rho_0(1 + 0.375\thinspace l_0/d) + \rho_\mathrm{grain}$, with $\rho_0$ = 23 µΩ·cm and their Table IV's $\rho_\mathrm{grain}$ = 14 µΩ·cm and $l_0$ = 96 nm, at 100 nm, the thickest of Table II's films, against the 45 µΩ·cm of their abstract and Table II (µΩ·cm shown); at 45 nm it gives 55.4, inside Table II's 45 to 60",
+            tier: Tier::Published,
+            source: "W. Tsai et al., J. Appl. Phys. 73, 4462 (1993), doi:10.1063/1.352785, Eq. (3), Tables II and IV, abstract",
+            run: resistivity::tsai_lowest,
         },
         Case {
             id: "material/silicon-film-sondheimer-limits",

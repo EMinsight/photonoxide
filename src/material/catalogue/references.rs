@@ -397,6 +397,20 @@ const PAPERS: &[(&str, &str, &str, &str, &str)] = &[
         "",
     ),
     (
+        "tsai-1993",
+        "W. Tsai, M. Delfino, J. A. Fair, D. Hodul, J. Appl. Phys. 73, 4462 (1993)",
+        "Temperature dependence of the electrical resistivity of reactively sputtered TiN films",
+        "10.1063/1.352785",
+        "",
+    ),
+    (
+        "kearney-2018",
+        "B. T. Kearney, B. Jugdersuren, J. C. Culbertson, P. A. DeSario, X. Liu, Thin Solid Films 661, 78 (2018)",
+        "Substrate and annealing temperature dependent electrical resistivity of sputtered titanium nitride thin films",
+        "10.1016/j.tsf.2018.07.001",
+        "",
+    ),
+    (
         "kremer-2004",
         "R. K. Kremer, K. Graf, M. Cardona, G. G. Devyatykh, A. V. Gusev, A. M. Gibin, A. V. Inyushkin, A. N. Taldenkov, H.-J. Pohl, Solid State Commun. 131, 499 (2004)",
         "Thermal conductivity of isotopically enriched 28Si: revisited",

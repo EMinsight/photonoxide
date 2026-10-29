@@ -66,6 +66,10 @@ papers:
     doi: 10.1140/epjb/e2002-00177-x
   - cite: "C. Y. Ho, R. W. Powell, P. E. Liley, J. Phys. Chem. Ref. Data 1, 279 (1972)"
     doi: 10.1063/1.3253100
+  - cite: "W. Tsai, M. Delfino, J. A. Fair, D. Hodul, J. Appl. Phys. 73, 4462 (1993)"
+    doi: 10.1063/1.352785
+  - cite: "B. T. Kearney, B. Jugdersuren, J. C. Culbertson, P. A. DeSario, X. Liu, Thin Solid Films 661, 78 (2018)"
+    doi: 10.1016/j.tsf.2018.07.001
   - cite: "R. K. Kremer et al., Solid State Commun. 131, 499 (2004)"
     doi: 10.1016/j.ssc.2004.06.022
   - cite: "C. J. Glassbrenner, G. A. Slack, Phys. Rev. 134, A1058 (1964)"
@@ -125,6 +129,7 @@ validation:
   - material/conductivity-tables
   - material/silicon-kremer-ho
   - material/silicon-glassbrenner-table
+  - material/tin-tsai-eq-3
   - material/silicon-glassbrenner-ho
   - material/silicon-film-ju-goodson
   - material/silicon-film-220
@@ -317,6 +322,47 @@ film crystallizes when held above $T_c$ long enough (milliseconds for
 Sb₂Se₃ by Lawson et al.; the kinetics aren't modelled) and is amorphized when it melts and is
 quenched; latent heat doesn't change when a film first reaches $T_m$, so the switching
 thresholds need none.
+
+## Electrical resistivities
+
+`catalogue::resistivities()` has measured films' electrical resistivity (`catalogue::
+resistivity("TiN")`), what a heater's resistance, and so its voltage for a power, takes: each
+value is films made one way, with their thickness, the temperature coefficient of resistance
+(TCR) where given, and the paper; `ResistivityValue::conductivity` gives it in S/m. A film's
+resistivity depends on how it was made far more than on its material, so a heater's own film
+should be chosen, not an average.
+
+| TiN film | Thickness | ρ at room temperature (µΩ·cm) | TCR (per K) | Source |
+|---|---|---|---|---|
+| reactively sputtered, uncollimated, 40 °C | 45–100 nm | 250–350 | 2.28e-4 (5–280 K) | Tsai et al. 1993, Tables II, III |
+| collimated, 40 °C | 45–100 nm | 205–215 | 2.64e-4 | Tsai et al. 1993 |
+| uncollimated, 500 °C | 45–100 nm | 175–200 | — | Tsai et al. 1993 |
+| collimated, 40 °C, −115 V bias | 45–100 nm | 120–135 | 5.61e-4 | Tsai et al. 1993 |
+| collimated, 500 °C | 45–100 nm | 65–70 | 1.018e-3 | Tsai et al. 1993 |
+| collimated, 500 °C, −100 V bias | 45–100 nm | 45–60 | 1.355e-3 | Tsai et al. 1993 |
+| RF sputtered, 600 °C (sample F) | 58.0 nm | 70.2 | 9.5e-4 (room temperature–500 °C) | Kearney et al. 2018, Section 3 |
+| RF sputtered, 350 °C, annealed 600 °C in vacuum (sample D) | 62.5 nm | 78.0 | 9.9e-4 | Kearney et al. 2018 |
+
+- **Tsai et al.** sputtered Ti in 40 % N₂/Ar onto thermal oxide and measured each film with a
+  four-point probe minutes after it left the chamber: in air its sheet resistance rose up to 8 %
+  in 12 hours (5 % for the collimated films), which they put down to oxygen at the grain
+  boundaries. Collimating the flux, heating the substrate, a bias and a high rate each lowered the
+  resistivity, to 45 µΩ·cm against a single crystal's 23. Their Eq. (3), $\rho = \rho_0(1 +
+  0.375\,l_0/d) + \rho_\mathrm{grain}$ with $\rho_0$ = 23 µΩ·cm, fits their films' thickness
+  dependence (Table IV): for the lowest films it gives 45.3 µΩ·cm at 100 nm, the abstract's 45
+  (`material/tin-tsai-eq-3`), and 55.4 at 45 nm, inside Table II's 45 to 60; for the two films
+  at 40 °C it stays inside Table II's ranges at both ends. For the unbiased films at 500 °C it gives
+  67.8 at 45 nm and 60.2 µΩ·cm at 100 nm, the thick end 4.8 below Table II's 65 to 70; the table
+  doesn't say which thicknesses each row spans, so this is noted rather than a case. Their text
+  also gives 0.0064 per K (6356 ppm) for a 264 nm film at 500 °C, beyond Table III's films and
+  Fig. 8's axis; it isn't taken.
+- **Kearney et al.** RF-sputtered TiN in N₂:Ar 20:1 onto fused silica over 6 nm of Ti, and
+  measured it by van der Pauw at room temperature between cycles to 500 °C; the films deposited
+  at room temperature relax on the first heating (their resistivity falls 35 %), so a film's
+  history matters too. Their text gives 78.0 µΩ·cm to sample E but describes sample D, annealed
+  without breaking the vacuum, and adds that D's is 13 % below E's and 10 % above F's (78.0/70.2
+  = 1.11); their Fig. 2(b) shows it as D's, and so it is taken. E, annealed after exposure to
+  air, has a TCR of 6.9e-4 per K and a resistivity 13 % higher, not printed.
 
 ## Tags
 
