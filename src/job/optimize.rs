@@ -85,11 +85,14 @@
 use std::sync::atomic::{AtomicUsize, Ordering};
 
 use rayon::prelude::*;
-use schemars::JsonSchema;
+use schemars::{JsonSchema, SchemaGenerator};
 use serde::{Deserialize, Serialize};
 use toml::{Table, Value};
 
-use super::device::{Compute, band_of, fidelity_name, grids_of, scene_ports, spec_of};
+use super::device::{
+    Compute, DEVICE_EXPORTS, band_of, fidelity_name, grids_of, scene_ports, spec_of,
+};
+use super::kind::TaskKind;
 use super::study::{CornerTask, Named, check_corners, corners_of, set};
 use super::{Corner, Event, Study, task_error};
 use crate::circuit::SMatrix;
@@ -97,7 +100,7 @@ use crate::device::objective::{Names, Source};
 use crate::device::spec::Grids;
 use crate::device::{Built, Design, Goal, Limit, Reduce, Spec};
 use crate::expr::{Dim, Dual, Expr};
-use crate::run::{Job, Run};
+use crate::run::{Job, Run, Stop};
 use crate::units::Wavelength;
 use crate::{Error, Result};
 
@@ -761,7 +764,7 @@ pub(super) fn corner_table(c: &Corner) -> Value {
 #[derive(Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub(super) struct OptimizeTask {
-    #[allow(dead_code)] // read to dispatch, checked by serde
+    #[allow(dead_code)] // looked up by the registry (job::kind); kept for serde and the schema
     kind: String,
     method: String,
     seed: Option<u64>,
@@ -2662,6 +2665,48 @@ pub(super) fn check(job: &Job) -> Result<()> {
     Problem::of(job).map(|_| ())
 }
 
+/// The `"optimize"` kind beside a `[device]`: the design's parameters optimized, by genoxide in
+/// the `photonoxide` program.
+pub(super) struct DeviceOptimizeKind;
+
+impl TaskKind for DeviceOptimizeKind {
+    fn name(&self) -> &'static str {
+        "optimize"
+    }
+
+    fn schema(&self, g: &mut SchemaGenerator) -> serde_json::Value {
+        super::schema::task::<OptimizeTask>(g)
+    }
+
+    fn check(&self, job: &Job) -> Result<()> {
+        super::device_scene(job)?;
+        check(job)
+    }
+
+    fn preview(&self, job: &Job) -> Result<Event> {
+        super::device_scene(job)
+    }
+
+    fn execute(&self, job: &Job, _: &mut Run, _: &Stop) -> Result<()> {
+        super::check(job)?;
+        Err(runs_elsewhere())
+    }
+
+    fn exports(&self, _: &Job) -> (&'static str, &'static [&'static str]) {
+        DEVICE_EXPORTS
+    }
+}
+
+/// What [`super::execute`] says of an `"optimize"` job, whatever it optimizes: the program runs
+/// it.
+pub(super) fn runs_elsewhere() -> Error {
+    task_error(
+        "an \"optimize\" job's optimizer is genoxide's, which the photonoxide program runs: \
+         photonoxide run <job> (the studio window shows it live); the library supplies its \
+         objectives and records it (photonoxide::job::Problem, Recorder)",
+    )
+}
+
 /// The design of evaluation `x` of the optimization `job`, as Apply takes it: the job's
 /// `[device]` with the variables at `x`.
 ///
@@ -2673,6 +2718,7 @@ pub fn design_of(job: &Job, x: &[f64]) -> Result<Spec> {
 }
 
 mod chip;
+pub(super) use chip::ChipOptimizeKind;
 pub use chip::optimize_from_chip;
 pub(super) mod crosstalk;
 

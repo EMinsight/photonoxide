@@ -1,13 +1,11 @@
 //! Checking a job without running it.
 
-use super::modes::{
-    check_export, check_tensors, check_threshold, modes_guide, modes_pml, modes_task, modes_z,
-};
+use super::kind::{Holder, find, named, unknown};
+use super::modes::check_export;
 use super::scene::device_scene;
-use super::structure::{StructureTask, draw, tensor_stack, window_z};
-use super::{chip, device, fdfd, fdtd, fit, optimize, params, statics, study};
+use super::{chip, device};
 use crate::run::Job;
-use crate::stack::LayerStack;
+use crate::stack::{LayerStack, Structure};
 use crate::units::Wavelength;
 use crate::{Error, Result};
 
@@ -111,6 +109,15 @@ pub(super) fn check_materials(stack: &LayerStack, wavelengths_um: &[f64]) -> Res
     Ok(())
 }
 
+/// The layer a job draws on is one of its structure's stack, and every material of the stack has
+/// data at each of `wavelengths_um`, the job's own first ([`check_materials`]).
+pub(super) fn check_layer(s: &Structure, layer: &str, wavelengths_um: &[f64]) -> Result<()> {
+    s.stack()
+        .layer(layer)
+        .ok_or_else(|| task_error(format!("the stack has no layer {layer}")))?;
+    check_materials(s.stack(), wavelengths_um)
+}
+
 /// A sweep's range: finite ends that differ, and at least 2 points.
 pub(super) fn check_sweep(from: f64, to: f64, points: usize) -> Result<()> {
     if points < 2 || !(from.is_finite() && to.is_finite()) {
@@ -164,104 +171,17 @@ fn check_inner(job: &Job) -> Result<()> {
         return chip::check(job);
     }
     if job.device().is_some() {
-        return match device::task_kind(job)?.as_deref() {
+        return match device::task_kind(job)? {
             None => device_scene(job).map(|_| ()),
-            Some("fdtd") => {
-                check_direct(job, "fdtd")?;
-                fdtd::check(job)
-            }
-            Some(kind @ ("sweep" | "corners")) => {
-                check_direct(job, kind)?;
-                device_scene(job)?;
-                study::check(job)
-            }
-            Some("fit") => {
-                check_direct(job, "fit")?;
-                device_scene(job)?;
-                fit::check(job)
-            }
-            Some("optimize") => {
-                check_direct(job, "optimize")?;
-                device_scene(job)?;
-                optimize::check(job)
-            }
-            Some(_) => {
-                check_direct(job, "spectrum")?;
-                device_scene(job)?;
-                device::check_spectrum(job)
+            Some(kind) => {
+                check_direct(job, kind.name())?;
+                kind.check(job)
             }
         };
     }
-    let kind = job
-        .task()
-        .get("kind")
-        .and_then(|k| k.as_str())
-        .ok_or_else(|| task_error("needs a kind, e.g. kind = \"structure\""))?;
-    check_direct(job, kind)?;
-    let mut wavelengths = Vec::new();
-    let (s, layer, wavelength_um) = match kind {
-        "structure" => {
-            let task: StructureTask = params::task(job)?;
-            task.validate()?;
-            let s = task.structure()?;
-            window_z(task.z_um, &task.layer, &s, task.step_nm)?;
-            (s, task.layer, task.wavelength_um)
-        }
-        "modes" => {
-            let task = modes_task(job, None)?;
-            task.validate()?;
-            let stack = tensor_stack(&task.stack, task.core_nm, task.bottom_oxide_um)?;
-            let s = draw(stack, &task.rect, &task.circle, &task.ring)?;
-            let z = modes_z(&task, &s)?;
-            modes_guide(&task, &s, z)?;
-            modes_pml(&task, &s, z)?;
-            if let Some(sw) = task.sweep.iter().find(|sw| sw.parameter == "wavelength") {
-                wavelengths.extend([sw.from, sw.to]);
-            }
-            if task.modes_above.is_some() {
-                // (each material's data at these wavelengths is checked first, as below)
-                check_materials(s.stack(), &[task.wavelength_um])?;
-                check_materials(s.stack(), &wavelengths)?;
-            }
-            let mut at = vec![task.wavelength_um];
-            at.extend(&wavelengths);
-            check_threshold(&task, &s, z, &at)?;
-            for &w in &at {
-                check_tensors(s.stack(), task.along()?, w)?;
-            }
-            // a parameter's sweep: its shapes at both ends must be shapes
-            if let Some(sw) = task
-                .sweep
-                .iter()
-                .find(|sw| task.parameters.contains(&sw.parameter))
-            {
-                for end in [sw.from, sw.to] {
-                    let at = modes_task(job, Some((&sw.parameter, end)))?;
-                    let stack = tensor_stack(&at.stack, at.core_nm, at.bottom_oxide_um)?;
-                    draw(stack, &at.rect, &at.circle, &at.ring)
-                        .and_then(|swept| modes_pml(&task, &swept, z))
-                        .map_err(|e| {
-                            task_error(format!("at the sweep's {} = {end}: {e}", sw.parameter))
-                        })?;
-                }
-            }
-            (s, task.layer, task.wavelength_um)
-        }
-        "fdfd" => return fdfd::check(job),
-        "fdtd" => return fdtd::check(job),
-        "static" => return statics::check(job),
-        "optimize" if optimize::crosstalk::corrects(job) => return optimize::check(job),
-        "optimize" => {
-            return Err(task_error(
-                "an \"optimize\" task optimizes a [device], a [circuit], or a heater array's \
-                 [task.crosstalk]",
-            ));
-        }
-        other => return Err(task_error(format!("unknown kind \"{other}\""))),
-    };
-    s.stack()
-        .layer(&layer)
-        .ok_or_else(|| task_error(format!("the stack has no layer {layer}")))?;
-    wavelengths.insert(0, wavelength_um);
-    check_materials(s.stack(), &wavelengths)
+    let name = named(job)?;
+    check_direct(job, name)?;
+    find(Holder::Solver, name)
+        .ok_or_else(|| unknown(name))?
+        .check(job)
 }

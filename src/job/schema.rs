@@ -20,6 +20,7 @@ use schemars::generate::SchemaSettings;
 use schemars::{JsonSchema, Schema, SchemaGenerator, json_schema};
 use serde_json::{Map, Value, json};
 
+use super::kind::{self, Holder};
 use super::params::{PATH, PLACE, SEGMENT, SHAPE, SHAPES, SHIFT, Want};
 
 /// Where the published schema is, for a job file's `$schema` and an editor's settings.
@@ -146,47 +147,16 @@ pub fn schema() -> Value {
 pub(crate) fn base() -> Value {
     let mut g = SchemaSettings::draft2020_12().into_generator();
     let job = g.subschema_for::<crate::run::JobFile>();
-    let solver = kinds(
-        &mut g,
-        &[
-            ("structure", task::<super::StructureTask>),
-            ("modes", task::<super::ModesTask>),
-            ("fdfd", task::<super::fdfd::FdfdTask>),
-            ("fdtd", task::<super::fdtd::FdtdTask>),
-            ("static", task::<super::statics::StaticTask>),
-            (
-                "optimize",
-                task::<super::optimize::crosstalk::CrosstalkTask>,
-            ),
-        ],
-    );
+    let solver = kinds(&mut g, Holder::Solver);
     // a device's task may be empty, or left out: the design at its fidelity, its own model
-    let mut device = kinds(
-        &mut g,
-        &[
-            ("spectrum", task::<super::device::SpectrumTask>),
-            ("sweep", task::<super::study::StudyTask>),
-            ("corners", task::<super::study::StudyTask>),
-            ("fit", task::<super::fit::FitTask>),
-            ("optimize", task::<super::optimize::OptimizeTask>),
-            ("fdtd", task::<super::fdtd::FdtdTask>),
-        ],
-    );
+    let mut device = kinds(&mut g, Holder::Device);
     let device_task = device.as_object_mut().expect("a task's schema");
     device_task.remove("required");
     device_task["allOf"]
         .as_array_mut()
         .expect("its kinds")
         .push(json!({ "anyOf": [{ "maxProperties": 0 }, { "required": ["kind"] }] }));
-    let chip = kinds(
-        &mut g,
-        &[
-            ("spectrum", task::<super::chip::ChipTask>),
-            ("sweep", task::<super::chip::ChipTask>),
-            ("corners", task::<super::chip::ChipTask>),
-            ("optimize", task::<super::optimize::OptimizeTask>),
-        ],
-    );
+    let chip = kinds(&mut g, Holder::Chip);
     let mut defs = g.take_definitions(true);
     let name = job
         .as_object()
@@ -267,23 +237,21 @@ pub fn schema_text() -> String {
     text
 }
 
-/// A function writing a task struct's schema: [`task`] at its type.
-type TaskSchema = fn(&mut SchemaGenerator) -> Value;
-
 /// A task's schema: a reference to its struct's.
-fn task<T: JsonSchema>(g: &mut SchemaGenerator) -> Value {
+pub(super) fn task<T: JsonSchema>(g: &mut SchemaGenerator) -> Value {
     g.subschema_for::<T>().to_value()
 }
 
-/// A task table that is one of `kinds`: its `kind` one of their names, the rest its kind's.
-fn kinds(g: &mut SchemaGenerator, kinds: &[(&str, TaskSchema)]) -> Value {
-    let names: Vec<&str> = kinds.iter().map(|(k, _)| *k).collect();
-    let cases: Vec<Value> = kinds
+/// A task table beside `holder`: its `kind` one of the registry's names, the rest its kind's.
+fn kinds(g: &mut SchemaGenerator, holder: Holder) -> Value {
+    let registered = kind::kinds(holder);
+    let names: Vec<&str> = registered.iter().map(|k| k.name()).collect();
+    let cases: Vec<Value> = registered
         .iter()
-        .map(|(k, schema)| {
+        .map(|k| {
             json!({
-                "if": { "properties": { "kind": { "const": k } }, "required": ["kind"] },
-                "then": schema(g)
+                "if": { "properties": { "kind": { "const": k.name() } }, "required": ["kind"] },
+                "then": k.schema(g)
             })
         })
         .collect();

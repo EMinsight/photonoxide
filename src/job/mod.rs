@@ -204,7 +204,8 @@
 //! [`execute`] refuses the job and says so. [`optimize_from_device`] writes such a job. See
 //! `optimize.rs`.
 //!
-//! A job file's `[task]` table names its kind. The kinds so far:
+//! A job file's `[task]` table names its kind. Each kind is one file implementing one trait, and
+//! one line in a registry (`kind.rs`; CONTRIBUTING.md, "A new kind of job"). The kinds so far:
 //!
 //! - `"structure"`: a layer stack with shapes drawn on it, recorded as pictures of its
 //!   permittivity, seen from above and on a vertical cut.
@@ -470,6 +471,8 @@ use crate::units::{Length, Wavelength};
 use modes::{modes_task, modes_z, window_edge_highest};
 #[cfg(test)]
 use scene::outline;
+#[cfg(test)]
+use structure::StructureTask;
 
 mod bodies;
 #[cfg(test)]
@@ -491,6 +494,9 @@ mod fit;
 mod fit_checks;
 #[cfg(test)]
 mod fit_tests;
+mod kind;
+#[cfg(test)]
+mod kind_tests;
 mod leaky_checks;
 #[cfg(test)]
 mod leaky_tests;
@@ -524,16 +530,14 @@ mod templates;
 use check::{
     check_cells, check_finite, check_materials, check_step, check_sweep, check_window, task_error,
 };
-use execute::{execute_task, reason};
+use execute::reason;
 use modes::{
-    Along, ExportSpec, Frame, ModesTask, cell_tensor, cross_section, export_in, export_of,
-    intensity,
+    Along, ExportSpec, Frame, cell_tensor, cross_section, export_in, export_of, intensity,
 };
 use scene::{device_scene, record_ports, scene};
 use structure::{
-    CircleSpec, EtchSpec, PathSpec, RectSpec, RingSpec, SegmentSpec, StackField, StructureTask,
-    check_etches_2d, diagonal_stack, draw, draw_paths, named_stack, path_of, stack_media,
-    tensor_stack,
+    CircleSpec, EtchSpec, PathSpec, RectSpec, RingSpec, SegmentSpec, StackField, check_etches_2d,
+    diagonal_stack, draw, draw_paths, named_stack, path_of, stack_media, tensor_stack,
 };
 
 pub use check::check;
