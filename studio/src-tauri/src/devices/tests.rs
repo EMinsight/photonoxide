@@ -116,7 +116,7 @@ fn every_device_in_the_library_opens() {
 
 #[test]
 fn the_geometry_and_figures_are_the_librarys_for_the_same_values() {
-    let cases: [(&str, &[(&str, &str)]); 17] = [
+    let cases: [(&str, &[(&str, &str)]); 18] = [
         ("waveguide", &[("width", "0.45"), ("length", "25")]),
         ("bend", &[("radius", "7.5 um"), ("angle", "60 deg")]),
         (
@@ -168,6 +168,10 @@ fn the_geometry_and_figures_are_the_librarys_for_the_same_values() {
             "Sb2Se3 phase-change phase shifter",
             &[("coverage", "0.6"), ("crystallized", "1")],
         ),
+        (
+            "TFLN Mach-Zehnder modulator",
+            &[("gap", "6 um"), ("voltage", "2"), ("frequency", "40")],
+        ),
     ];
     for (kind, parameters) in cases {
         let spec = cheapest(kind, parameters);
@@ -190,18 +194,21 @@ fn the_geometry_and_figures_are_the_librarys_for_the_same_values() {
             assert_eq!(p.direction, q.direction);
             assert_eq!(p.width, q.width.to_um());
         }
-        // a shape for each the library draws
+        // a shape for each the library draws, on its layer (an etched layer's top band: its
+        // bands below, `LN 2` and on, draw the same shapes again)
         let Some(Event::Scene { shapes, .. }) = &view.scene else {
             panic!("no scene")
         };
-        let drawn: usize = g
-            .structure
-            .stack()
-            .layers()
+        let layers = g.structure.stack().layers();
+        let drawn: usize = layers
             .iter()
             .map(|l| g.structure.shapes(&l.name).len())
             .sum();
-        assert_eq!(shapes.len(), drawn, "{kind}");
+        let on_layers = shapes
+            .iter()
+            .filter(|s| layers.iter().any(|l| l.name == s.layer))
+            .count();
+        assert_eq!(on_layers, drawn, "{kind}");
         // the figures, to the bit
         let ours = derived(&spec, &spec.fidelity).unwrap().figures;
         let theirs = d.derived(values, f).unwrap();
@@ -565,6 +572,12 @@ fn every_devices_job_and_study_is_made_checked_and_read_back_into_the_form() {
                 ..ComputeIn::default()
             },
         ] {
+            // a modulator millimetres long is more than an FDTD grid holds: refused, and said so
+            if compute.fdtd.is_some() && d.kind().contains("modulator") {
+                let e = job_text_of(&spec, &compute, "page-job").unwrap_err();
+                assert!(e.contains("cells, more than"), "{e}");
+                continue;
+            }
             let text = job_text_of(&spec, &compute, "page-job")
                 .unwrap_or_else(|e| panic!("{}: {e}", d.kind()));
             assert!(

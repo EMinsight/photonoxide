@@ -254,6 +254,7 @@ pub fn rules() -> Vec<(&'static str, Rule)> {
     rules.extend(devices::rules());
     rules.extend(pcm::rules());
     rules.extend(eme::rules());
+    rules.extend(modulator::rules());
     rules
 }
 
@@ -2470,6 +2471,8 @@ pub fn cases() -> Vec<Case> {
     cases.extend(crate::device::pcm_checks::cases());
     // and eigenmode expansion's: slab steps against closed forms, tapers against FDFD
     cases.extend(crate::eme::checks::cases());
+    // and the thin-film lithium niobate Mach-Zehnder modulator as a device
+    cases.extend(crate::device::tfln_checks::cases());
     cases
 }
 
@@ -5489,6 +5492,7 @@ mod gpu;
 mod line;
 mod materials;
 mod modes;
+mod modulator;
 mod pcm;
 #[cfg(feature = "gpu")]
 pub use gpu::gpu_report;

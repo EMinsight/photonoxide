@@ -1,0 +1,29 @@
+Zhang et al. 2022's thin-film lithium niobate modulators through photonoxide's TFLN Mach-Zehnder modulator device, at 1550 nm
+
+5.8 mm long
+  analytic  VpiL 2.388 V cm  Vpi 4.117 V  f_3dB   34.8 GHz  f_6dB   88.5 GHz   n_rf 2.689  Z0 42.00 ohm (1 GHz)
+            (exact: no grid)
+  2D        VpiL 2.372 V cm  Vpi 4.090 V  f_3dB   91.7 GHz  f_6dB  336.7 GHz   n_rf 2.473  Z0 45.46 ohm (1 GHz)
+            (the field on 36288 cells graded from 20.000 nm by 1.15 to 1 um, the mode on 163 x 96 cells of 20.000 nm over the film)
+  measured  VpiL 2.300 V cm  Vpi 3.966 V  f_3dB  170.0 GHz  f_6dB  295.0 GHz
+            (measured: Section 2, at DC (2.67 V·cm at 1 GHz))
+  2D at 250 GHz: response -5.04 dB from 1 GHz, RF Vpi 7.36 V (measured 8.3 V)
+  2D 3 dB bandwidth 91.2 GHz against the measured 170: 0.54 of it
+  5.8 mm: 2D response at 250 GHz, grids 1 and 1/2     0.559767   on 2 grids, error 4.6e-4 ≤ 6e-3 ok
+  5.8 mm: 2D m(250)/m(1) (measured)      0.559767   paper 0.5546     ± 1.11e-1   ok
+  2D VpiL on grids 1 and 1/2, V cm       2.370421   on 2 grids, error 1.6e-3 ≤ 2.4e-2 ok
+  2D VpiL, V cm (measured at DC)         2.370421   paper 2.3        ± 1.5e-1    ok
+
+10.8 mm long
+  analytic  VpiL 2.388 V cm  Vpi 2.211 V  f_3dB   13.8 GHz  f_6dB   43.5 GHz   n_rf 2.689  Z0 42.00 ohm (1 GHz)
+            (exact: no grid)
+  2D        VpiL 2.372 V cm  Vpi 2.196 V  f_3dB   32.6 GHz  f_6dB  149.8 GHz   n_rf 2.473  Z0 45.46 ohm (1 GHz)
+            (the field on 36288 cells graded from 20.000 nm by 1.15 to 1 um, the mode on 163 x 96 cells of 20.000 nm over the film)
+  measured  VpiL 2.300 V cm  Vpi 2.130 V  f_3dB  100.0 GHz  f_6dB  175.0 GHz
+            (measured: Section 2, the devices' at DC (2.67 V·cm at 1 GHz))
+  2D at 250 GHz: response -8.12 dB from 1 GHz, RF Vpi 5.75 V (measured 7.3 V)
+  2D 3 dB bandwidth 32.6 GHz against the measured 100: 0.33 of it
+  10.8 mm: 2D response at 250 GHz, grids 1 and 1/2     0.392792   on 2 grids, error 6.4e-4 ≤ 4e-3 ok
+  10.8 mm: 2D m(250)/m(1) (measured)     0.392792   paper 0.3387     ± 6.8e-2    ok
+  analytic VpiL, V cm                    2.387612   2D 2.371988   ± 3.56e-1      ok
+all 7 within tolerance of the paper
