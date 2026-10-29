@@ -106,10 +106,11 @@
 //! ```
 //!
 //! The run records an [`Event::StaticField`] per field (the temperature or the potential, and a
-//! current's Joule heat), each in its unit on pixels of about the finest step, and an
-//! [`Event::StaticResult`] with the grid and the numbers: the probes' means, the largest value,
-//! the heat or charge of each held rectangle, what leaves through each side, the balance's
-//! imbalance, and a capacitance matrix or the contacts' currents and Joule power.
+//! current's Joule heat), each in its unit on pixels of about the finest step (with
+//! `[task.electro_optic]`, the electrodes' |E| and the mode's |E|² on the mode's window too),
+//! and an [`Event::StaticResult`] with the grid and the numbers: the probes' means, the largest
+//! value, the heat or charge of each held rectangle, what leaves through each side, the
+//! balance's imbalance, and a capacitance matrix or the contacts' currents and Joule power.
 
 use std::collections::BTreeMap;
 

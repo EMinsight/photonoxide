@@ -239,6 +239,14 @@ impl Guide {
         self.effective_index
     }
 
+    /// Each optical cell that responds: its centre (µm, in the heat section's frame) and its
+    /// weight w_c, the change of the effective index a rise of 1 K in that cell alone gives (a
+    /// cell of a medium with no dn/dT has none and isn't listed). On the optics' uniform grid,
+    /// so a weight is also its cell's density: where the mode takes its phase from the heat.
+    pub fn weights(&self) -> &[([f64; 2], f64)] {
+        &self.cells
+    }
+
     /// dn_eff/dT for a uniform rise, 1/K: the sum of the weights.
     pub fn thermo_optic(&self) -> f64 {
         self.cells.iter().map(|c| c.1).sum()

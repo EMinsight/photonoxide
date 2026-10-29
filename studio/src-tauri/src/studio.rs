@@ -148,6 +148,8 @@ pub fn show(dir: Option<&Path>, live: Option<Live>) -> Result<(), String> {
             crate::devices::optimizing::optimize_design,
             crate::devices::device_job_read,
             crate::devices::device_solved,
+            crate::devices::fields::device_temperature,
+            crate::devices::fields::raster_contours,
             crate::form::job_form,
             crate::form::form_text,
             crate::form::form_kept_shapes,

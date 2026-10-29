@@ -1237,9 +1237,10 @@ pub enum Event {
     /// A field of a static job ([`crate::thermal`], [`crate::electro`]) on its cross-section,
     /// in its own unit (not scaled): each pixel the value of the cell its centre falls in.
     StaticField {
-        /// What it is: `"temperature"` or `"potential"`.
+        /// What it is: `"temperature"` or `"potential"`; with an `electro_optic` table also
+        /// `"electric field |E|"` and `"mode's |E|^2"` on the mode's window.
         label: String,
-        /// Its unit: `"K"` or `"V"`.
+        /// Its unit: `"K"` or `"V"`; `"V/m"` for |E|, `"relative"` for the mode (1 at its peak).
         unit: String,
         /// The axes: across the guide and up, `["y", "z"]`.
         axes: [String; 2],

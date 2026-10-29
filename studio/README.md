@@ -131,6 +131,11 @@ in a drawer opened from the status bar.
     The pictures of fields and modes carry the structure's outline (the shapes' edges, and a
     cross-section's layer interfaces), so a dark region can be told inside from outside; a
     tick turns it off.
+  - **A static job's fields** (heat, electrostatics, current) on its cross-section, each from
+    its smallest value to its largest, the value under the pointer; a temperature with its
+    isotherms at round levels. With an `electro_optic` table, the electrode-field view: the
+    electrodes' |E| (V/m, at their potentials) on the mode's window, the mode's outline over it
+    (its |E|² at half and 1/e² of its peak), so the overlap that sets Vπ·L can be seen.
   - **An FDTD run** opens on the 2D view: its field as it propagates, frame by frame, live or
     played, paused and scrubbed (`,` and `.` step a frame), red and blue for a component's sign
     or black to pale yellow for |E|², on each frame's own peak or the run's so far, with a gain
@@ -174,7 +179,14 @@ in a drawer opened from the status bar.
     **Top** (from above, the ports named, the cut dragged along the device), **Cross-section**
     (the cut, with the top view to drag it) or **As solved** (the permittivity on the cells the
     chosen model solves on: an FDFD's or FDTD's plane, a mode solve's cross-section, with the
-    cells' size); every change redraws it at once. The tabs:
+    cells' size); every change redraws it at once. A thermo-optic phase shifter's view has
+    **Temperature** too: its 2D model's temperature rise on its own cross-section at the design's
+    power, or at the power for a π shift while that is zero (the power over the design's length,
+    per metre of guide), with isotherms at round levels, the
+    media's edges, and where the guide's mode takes its phase from the heat (its thermo-optic
+    weights at half and 1/e² of their largest), the peak and the rise the mode feels (its
+    weights' mean, which times its dn_eff/dT and 2πL/λ is the 2D model's phase), and the grids;
+    the rise under the pointer. The tabs:
     - **Design** (open first): the geometry, each parameter a field that takes a number in its
       unit or an expression (`w/2.5`, `450 nm`), with its slider and range, what it uses and
       what uses it, and its error in place with a caret under the column; named parameters can
