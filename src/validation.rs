@@ -249,6 +249,7 @@ pub fn rules() -> Vec<(&'static str, Rule)> {
     rules.extend(line::rules());
     rules.extend(devices::rules());
     rules.extend(pcm::rules());
+    rules.extend(eme::rules());
     rules
 }
 
@@ -2412,6 +2413,8 @@ pub fn cases() -> Vec<Case> {
     cases.extend(crate::device::thermo_checks::cases());
     // and the phase-change phase shifters as devices, at analytic and 2D fidelity
     cases.extend(crate::device::pcm_checks::cases());
+    // and eigenmode expansion's: slab steps against closed forms, tapers against FDFD
+    cases.extend(crate::eme::checks::cases());
     cases
 }
 
@@ -5422,6 +5425,7 @@ fn um(value: f64) -> Wavelength {
 }
 
 mod devices;
+mod eme;
 mod fdfd;
 mod fdtd;
 mod geometry;

@@ -58,6 +58,7 @@ pub mod convergence;
 pub mod device;
 mod eigen;
 pub mod electro;
+pub mod eme;
 pub mod error;
 pub mod export;
 pub mod expr;
