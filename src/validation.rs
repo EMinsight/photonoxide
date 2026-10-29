@@ -495,6 +495,13 @@ pub fn cases() -> Vec<Case> {
             run: conductivity_checks::glassbrenner_ho,
         },
         Case {
+            id: "material/tin-goel-zt",
+            title: r"TiN, an 86 nm thermal-ALD film: Goel et al.'s Eq. (3), $zT = S^2\sigma T/\kappa$, with the film's power factor $S^2\sigma$ = 4.95 µW m$^{-1}$ K$^{-2}$ and the catalogue's $\kappa$ (their 7.01 W/(m·K)) at 300 K, against the zT they print, 0.0002 (shown); the paper states no uncertainty for $\kappa$, so the tolerance is half a unit of that printed digit. The plasma-enhanced film's, the catalogue's default (512 µW m$^{-1}$ K$^{-2}$, 26.96 W/(m·K)), gives 0.0057 at 300 K against their 0.0056, which holds below 297.5 K: their room temperature isn't stated",
+            tier: Tier::Published,
+            source: "P. Goel et al., Nanoscale Adv. 8, 612 (2026), doi:10.1039/d5na00914f, Eq. (3), Section 2.3 (p. 619) and the conclusions (p. 621)",
+            run: conductivity_checks::goel_thermal_zt,
+        },
+        Case {
             id: "material/silicon-film-ju-goodson",
             title: r"Silicon films' conductivity along them at 300 K: Sondheimer's reduction for diffuse surfaces with Ju & Goodson's effective mean free path of 0.3 µm, on Ho et al.'s 148 W/(m·K), against their measured films of 143, 154, 240 and 247 nm (Fig. 2, read off the plot; ±15 % error bars), within 10 %; it falls 24 and 26 % below their 78 and 85 nm films (largest relative deviation from 140 nm shown)",
             tier: Tier::Published,

@@ -71,16 +71,16 @@ pub(crate) fn two_layers() -> (f64, f64) {
 }
 
 /// A layer of every conductivity model in the catalogue, in series between 0 K below and 1 K
-/// above, each 1 µm thick and its k the model's at 300 K (the silicon film's at 0.22 µm, and as
-/// thick), on a graded grid with a line at each interface. Returns the relative error of the
-/// flux through each side against 1/Σ dᵢ/kᵢ.
+/// above, each 1 µm thick and its k the model's at 300 K (a film's at its default thickness, and
+/// as thick: silicon's 0.22 µm, TiN's 86 nm), on a graded grid with a line at each interface.
+/// Returns the relative error of the flux through each side against 1/Σ dᵢ/kᵢ.
 pub(crate) fn catalogue_series() -> f64 {
     use crate::material::catalogue::conductivities;
     let mut layers = Vec::new();
     for c in conductivities() {
         for m in &c.models {
             let (k, d) = match &m.thickness {
-                Some(_) => (m.conductivity(Some(300.0), Some(0.22)), 0.22),
+                Some(p) => (m.conductivity(Some(300.0), Some(p.default)), p.default),
                 None => (m.conductivity(Some(300.0), None), 1.0),
             };
             layers.push((
@@ -1070,7 +1070,7 @@ pub(crate) fn cases() -> Vec<Case> {
         },
         Case {
             id: "static/catalogue-series",
-            title: r"Static solver, heat: a layer of each of the catalogue's conductivity models at 300 K in series (bulk silicon by Ho et al. and by Kremer et al., a 220 nm silicon film, fused silica, tungsten, titanium, platinum; 1 µm each, the film 0.22), 0 K below and 1 K above, on a grid graded from 10 to 250 nm; the flux against $1/\sum_i d_i/k_i$ (relative error shown)",
+            title: r"Static solver, heat: a layer of each of the catalogue's conductivity models at 300 K in series (bulk silicon by Ho et al. and by Kremer et al., a 220 nm silicon film, fused silica, tungsten, titanium, platinum, and the two 86 nm TiN films; 1 µm each, the films 0.22 and 0.086), 0 K below and 1 K above, on a grid graded from 10 to 250 nm; the flux against $1/\sum_i d_i/k_i$ (relative error shown)",
             tier: Tier::Analytic,
             source: r"conduction through layers in series: their resistances $d_i/k_i$ add, which the scheme's harmonic interface conductivity gives exactly",
             run: || {

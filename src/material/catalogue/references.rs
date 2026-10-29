@@ -418,6 +418,13 @@ const PAPERS: &[(&str, &str, &str, &str, &str)] = &[
         "https://arxiv.org/abs/cond-mat/0407060",
     ),
     (
+        "goel-2026",
+        "P. Goel, C. Kauppinen, R. Raju, I. Tittonen, Nanoscale Adv. 8, 612 (2026)",
+        "Thermoelectric and electronic transport properties of thermal and plasma-enhanced ALD grown titanium nitride thin films",
+        "10.1039/d5na00914f",
+        "https://doi.org/10.1039/d5na00914f",
+    ),
+    (
         "ju-goodson-1999",
         "Y. S. Ju, K. E. Goodson, Appl. Phys. Lett. 74, 3005 (1999)",
         "Phonon scattering in silicon films with thickness of order 100 nm",

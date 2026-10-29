@@ -328,7 +328,7 @@ similar"). Steps half as long move the times by 3e-5 of themselves, and a grid t
 solves `physics = "heat"`, `"electrostatic"` or `"current"` (with its Joule heat when a thermal
 conductivity is given). Each medium's coefficient comes from the job by name (`Si`, `SiO2`, or a
 region's). A heat job's medium without a value takes the catalogue's thermal conductivity
-([catalogue](catalogue.md#thermal-conductivities): Si, SiO2, W, Ti, Pt) at `temperature_k`, 300 K
+([catalogue](catalogue.md#thermal-conductivities): Si, SiO2, W, Ti, Pt; TiN only for a stack layer of the 86 nm film it was measured on, so a heater drawn as a region still needs its value) at `temperature_k`, 300 K
 by default: a stack layer's silicon the film's at that layer's thickness (90.7 W/(m·K) for 220
 nm), its substrate, drawn apart as `Si (substrate)`, the bulk's (148), the oxide fused silica's
 (1.38). A job's own value always wins, and the run records each value the catalogue gave with
