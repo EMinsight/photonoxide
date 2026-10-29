@@ -291,6 +291,16 @@ pub(crate) fn rules() -> Vec<(&'static str, Rule)> {
             ),
         ),
         (
+            "material/tin-goel-zt",
+            Rule::new(
+                Absolute,
+                Reference,
+                5e-5,
+                Exact,
+                "half a unit of the printed 0.0002: the print's resolution, not an uncertainty, which the paper doesn't state",
+            ),
+        ),
+        (
             "material/silicon-film-ju-goodson",
             Rule::new(
                 Relative,

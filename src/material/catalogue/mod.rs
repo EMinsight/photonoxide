@@ -19,9 +19,9 @@
 //! filled from a secondary source. [`Entry::tags`] states what the crystal's symmetry allows.
 //!
 //! Beside the indices, thermal conductivities ([`Conductivity`], [`Entry::conductivity`]): bulk
-//! and thin-film silicon, fused silica and the heater metals tungsten, titanium and platinum,
-//! each model with its paper, temperature range and, for a film, thickness. The static solver
-//! ([`crate::thermal`]) takes them for a job's media it isn't given a value for.
+//! and thin-film silicon, fused silica, the heater metals tungsten, titanium and platinum, and a
+//! TiN film, each model with its paper, temperature range and, for a film, thickness. The static
+//! solver ([`crate::thermal`]) takes them for a job's media it isn't given a value for.
 //!
 //! Phase-change materials (Sb₂Se₃, Sb₂S₃, GST): each state an entry of its own
 //! ([`Category::PhaseChange`], e.g. `sb2se3-amorphous` and `sb2se3-crystalline`), the pair in a

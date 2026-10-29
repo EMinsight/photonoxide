@@ -70,6 +70,8 @@ papers:
     doi: 10.1016/j.ssc.2004.06.022
   - cite: "C. J. Glassbrenner, G. A. Slack, Phys. Rev. 134, A1058 (1964)"
     doi: 10.1103/PhysRev.134.A1058
+  - cite: "P. Goel, C. Kauppinen, R. Raju, I. Tittonen, Nanoscale Adv. 8, 612 (2026)"
+    doi: 10.1039/d5na00914f
   - cite: "Y. S. Ju, K. E. Goodson, Appl. Phys. Lett. 74, 3005 (1999)"
     doi: 10.1063/1.123994
   - cite: "R. W. Powell, C. Y. Ho, P. E. Liley, NSRDS-NBS 8 (1966)"
@@ -123,6 +125,7 @@ validation:
   - material/ingap-ferrini-table-consistency
   - material/ingap-ferrini-table-knots
   - material/conductivity-tables
+  - material/tin-goel-zt
   - material/silicon-kremer-ho
   - material/silicon-glassbrenner-table
   - material/silicon-glassbrenner-ho
@@ -177,6 +180,8 @@ media a job gives no value ([static](static.md#as-a-job)).
 | W | recommended values | 200–1000 K (±3 %) | 174 | Ho et al. 1972, p. 408 |
 | Ti | recommended values, polycrystalline | 200–1000 K (±10 %) | 21.9 | Ho et al. 1972, p. 407 |
 | Pt | recommended values | 200–1000 K (±3 %) | 71.6 | Ho et al. 1972, p. 379 |
+| TiN, film (default) | plasma-enhanced ALD, 86 nm | room temperature, 86 nm only (no uncertainty stated) | 26.96 | Goel et al. 2026, p. 619 |
+| TiN, film | thermal ALD, 86 nm | room temperature, 86 nm only (no uncertainty stated) | 7.01 | Goel et al. 2026, p. 619 |
 
 - **Tables.** Between the rows at whole hundreds of kelvin (and 250 K) $k$ is a power law of $T$,
   $k_i (T/T_i)^{\ln(k_{i+1}/k_i)/\ln(T_{i+1}/T_i)}$; the tables' rows between them (223.2 …
@@ -199,8 +204,28 @@ media a job gives no value ([static](static.md#as-a-job)).
   1000 K, where Ho et al.'s table stops, electrons and holes carry part of the heat, 40 % at the
   melting point. Ho et al.'s stays the default; Glassbrenner & Slack's reaches cryogenic heaters
   and anneals.
-- **Not here yet.** TiN, whose films' conductivity depends on how they are made (Jacques et al.'s
-  Table 3 takes 28 W/(m·K) from a handbook): a heater job gives it.
+- **TiN, a film.** Its conductivity depends on how the film is made, and the measurements in hand
+  spread over fifty times, so the catalogue gives one film's, for that film only, and a heater
+  job names its own. P. Goel et al. grew 86 nm films by atomic layer deposition (TiCl₄ and NH₃)
+  and measured them at room temperature by nanosecond transient thermoreflectance: 26.96 W/(m·K)
+  plasma-enhanced (26.95 in their conclusions) and 7.01 thermal. The paper states no uncertainty
+  (its fit is in a supplement not in hand), nor the 86 nm films' growth temperature; it calls
+  the value in-plane, which is odd for thermoreflectance through the film. The films are ALD, not
+  sputtered as a heater's TiN usually is, and their resistivity (0.91e-4 Ω·cm for the
+  plasma-enhanced process at 400 °C) was measured on thinner films, 31 nm, not on these.
+  Measured sputtered films lie far lower: V. Moraes et al. (J. Appl. Phys. 119, 225304 (2016))
+  3.1 W/(m·K) for a 580 nm dc-sputtered film by the 3ω method, 2.15 of it phonons (abstract,
+  Table II); K. Jagannadham (J. Vac. Sci. Technol. A 33, 031514 (2015)) 0.53 to 4.7 W/(m·K) for
+  seven films 0.7 to 1.2 µm thick sputtered onto silicon at 300 to 600 °C, by transient
+  thermoreflectance, ±15 % (Table II). They are the spread, not averaged; Jacques et al.'s Table 3
+  takes 28 W/(m·K) from a handbook. The models are the 86 nm film at 300 K (room temperature
+  taken so) and nothing else, so a heat job takes one only for a stack layer of TiN 86 nm thick,
+  and asks for a value otherwise. The check: their Eq. (3), $zT = S^2\sigma T/\kappa$, with the
+  thermal film's power factor (4.95 µW m⁻¹ K⁻²) and 7.01 gives 2.1e-4 at 300 K against their
+  0.0002, within half a unit of that printed digit, which is the print's resolution, not an
+  uncertainty (`material/tin-goel-zt`); the plasma-enhanced film's (512 µW m⁻¹ K⁻², 26.96) gives
+  0.0057 at 300 K against their 0.0056, which holds below 297.5 K: their room temperature isn't
+  stated, so that one is noted, not a case.
 
 ## Phase-change materials
 
