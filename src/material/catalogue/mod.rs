@@ -40,6 +40,7 @@ use super::Material;
 use crate::Result;
 use crate::units::Wavelength;
 
+pub(crate) mod batio3_film;
 pub(crate) mod checks;
 mod coming;
 pub(crate) mod conductivity;

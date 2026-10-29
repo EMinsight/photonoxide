@@ -17,6 +17,7 @@ use std::f64::consts::TAU;
 use num_complex::Complex64;
 
 use crate::circuit::components::checks as components;
+use crate::material::catalogue::batio3_film;
 use crate::material::catalogue::checks as catalogue;
 use crate::material::catalogue::conductivity_checks;
 use crate::material::catalogue::ferroelectric;
@@ -773,6 +774,13 @@ pub fn cases() -> Vec<Case> {
             tier: Tier::Published,
             source: "S. Abel et al., Nat. Mater. 18, 42 (2019), doi:10.1038/s41563-018-0208-0, Supplementary Note 6; F. Eltes et al., J. Lightwave Technol. 37, 1456 (2019), doi:10.1109/JLT.2019.2893500, Section IV; D. Chelladurai et al., Nat. Mater. 24, 868 (2025), doi:10.1038/s41563-025-02158-1, Methods; C. Deng et al., Light Sci. Appl. 15, 21 (2026), doi:10.1038/s41377-025-02081-9",
             run: ferroelectric::batio3_films,
+        },
+        Case {
+            id: "material/batio3-suceava-reflectance",
+            title: r"Barium titanate, a strained film on GdScO₃: the catalogue's ordinary index at 1550 nm (Suceava et al.'s Gaussian-oscillator model, 2.317, without its $k$), 36.53 nm on their GdScO₃ (their Cauchy model, 2.006), its reflectance at normal incidence against the 0.124 they measured at 4° with the substrate's back reflection cut off (shown). With the models' $k$ (0.061 Gaussian, 0.120 Lorentz) it is 0.1294 and 0.1345, where the paper computes 0.1237 and 0.1292: not reproduced",
+            tier: Tier::Published,
+            source: "A. Suceava et al., Adv. Mater. 38, e07564 (2025), doi:10.1002/adma.202507564, Supporting Information, Note S3: Table S1, the substrate's Cauchy model and the reflectance at 1550 nm",
+            run: batio3_film::suceava_reflectance,
         },
         Case {
             id: "material/gaas-gehrsitz-gap",
