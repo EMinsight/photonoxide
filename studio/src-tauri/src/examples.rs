@@ -85,6 +85,7 @@ examples!(
     thermo_jacques: "../../../examples/thermo_jacques.rs",
     thermo_harris: "../../../examples/thermo_harris.rs",
     pcm_delaney: "../../../examples/pcm_delaney.rs",
+    tfln_zhang: "../../../examples/tfln_zhang.rs",
 );
 
 /// An example's `main` returns an exit code, or a result holding one.
@@ -224,6 +225,10 @@ fn title(name: &str) -> (&'static str, &'static str) {
             "Phase-change phase shifters, as devices",
             "Delaney et al. 2020",
         ),
+        "tfln_zhang" => (
+            "A thin-film lithium niobate modulator, as a device",
+            "Zhang et al. 2022",
+        ),
         _ => ("", ""),
     }
 }
@@ -266,6 +271,7 @@ fn seconds(name: &str) -> f64 {
         "thermo_jacques" => 40.0,
         "thermo_harris" => 10.0,
         "pcm_delaney" => 30.0,
+        "tfln_zhang" => 60.0,
         "rib_hadley" => 30.0,
         "crossing_liu_poon" => 30.0,
         "coupler_liu_poon" => 100.0,

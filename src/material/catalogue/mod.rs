@@ -19,9 +19,11 @@
 //! filled from a secondary source. [`Entry::tags`] states what the crystal's symmetry allows.
 //!
 //! Beside the indices, thermal conductivities ([`Conductivity`], [`Entry::conductivity`]): bulk
-//! and thin-film silicon, fused silica and the heater metals tungsten, titanium and platinum,
-//! each model with its paper, temperature range and, for a film, thickness. The static solver
-//! ([`crate::thermal`]) takes them for a job's media it isn't given a value for.
+//! and thin-film silicon, fused silica, the heater metals tungsten, titanium and platinum, and a
+//! TiN film, each model with its paper, temperature range and, for a film, thickness. The static
+//! solver ([`crate::thermal`]) takes them for a job's media it isn't given a value for.
+//! Electrical resistivities of films ([`Resistivity`], [`resistivities`]): TiN's, film by film,
+//! each with how it was made, its thickness and paper.
 //!
 //! Permittivities and loss tangents at microwave and millimetre-wave frequencies
 //! ([`RfDielectric`], [`Entry::rf_dielectric`]): fused silica, crystalline quartz, sapphire,
@@ -38,6 +40,7 @@ use super::Material;
 use crate::Result;
 use crate::units::Wavelength;
 
+pub(crate) mod batio3_film;
 pub(crate) mod checks;
 mod coming;
 pub(crate) mod conductivity;
@@ -50,6 +53,7 @@ pub(crate) mod phase_change;
 pub(crate) mod phase_change_checks;
 pub(crate) mod phase_change_thermal;
 mod references;
+pub(crate) mod resistivity;
 pub(crate) mod rf;
 pub(crate) mod rf_checks;
 mod symmetry;
@@ -64,6 +68,7 @@ pub use conductivity::{Conductivity, ConductivityModel, conductivities, conducti
 pub use phase_change::{
     PhaseChange, State, figure_of_merit, partly_crystalline, phase_change, phase_changes,
 };
+pub use resistivity::{Resistivity, ResistivityValue, resistivities, resistivity};
 pub use rf::{RfDielectric, RfValue, rf_dielectric, rf_dielectrics};
 pub use symmetry::{Pattern, pattern};
 pub use tags::Tag;

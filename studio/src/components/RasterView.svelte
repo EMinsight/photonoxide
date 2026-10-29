@@ -15,6 +15,9 @@
     outline,
     quantity,
     bare = false,
+    lines = [],
+    ends,
+    scale,
   }: {
     raster: Raster;
     kind: "eps" | "intensity";
@@ -26,6 +29,12 @@
     quantity?: string;
     /** Only the picture and the readout: no colour bar or extents, for pictures side by side that share one. */
     bare?: boolean;
+    /** Lines over the picture, in its coordinates: levels of it (isotherms), thin and pale; a mode's outline, bright, its fainter level dashed. */
+    lines?: { lines: [number, number][][]; tone: "level" | "mode" | "mode-faint" }[];
+    /** The colour bar's ends, bottom and top, in place of "0" and "peak". */
+    ends?: [string, string];
+    /** The values the colours run between, in place of the smallest and largest: those beyond take its ends' colours. */
+    scale?: [number, number];
   } = $props();
 
   /** A line's points for the overlay, whose y runs down. */
@@ -42,7 +51,7 @@
     if (!canvas) return;
     canvas.width = raster.nx;
     canvas.height = raster.ny;
-    canvas.getContext("2d")!.putImageData(new ImageData(pixels(raster, colour, true), raster.nx, raster.ny), 0, 0);
+    canvas.getContext("2d")!.putImageData(new ImageData(pixels(raster, colour, true, scale), raster.nx, raster.ny), 0, 0);
   });
 
   $effect(() => {
@@ -77,6 +86,34 @@
         onpointermove={move}
         onpointerleave={() => (readout = null)}
       ></canvas>
+      {#if lines.length}
+        <!-- levels and a mode's outline: each a dark line under a coloured one, so it reads on the field's black and on its peak -->
+        <svg
+          class="pointer-events-none absolute inset-0 h-full w-full overflow-hidden rounded-md"
+          viewBox="{raster.x0} {-raster.y1} {raster.x1 - raster.x0} {raster.y1 - raster.y0}"
+          preserveAspectRatio="none"
+          aria-hidden="true"
+        >
+          {#each lines as set, s (s)}
+            {#each set.lines as line, k (k)}
+              {#if set.tone === "level"}
+                <polyline points={path(line)} fill="none" stroke="#ffffff" stroke-opacity="0.5" stroke-width="0.75" vector-effect="non-scaling-stroke" />
+              {:else}
+                <polyline points={path(line)} fill="none" stroke="#000000" stroke-opacity="0.5" stroke-width="3" stroke-linejoin="round" vector-effect="non-scaling-stroke" />
+                <polyline
+                  points={path(line)}
+                  fill="none"
+                  stroke="#5eead4"
+                  stroke-width="1.5"
+                  stroke-linejoin="round"
+                  stroke-dasharray={set.tone === "mode-faint" ? "5 4" : undefined}
+                  vector-effect="non-scaling-stroke"
+                />
+              {/if}
+            {/each}
+          {/each}
+        </svg>
+      {/if}
       {#if outline}
         <!-- the structure's edges: a dark line under a pale one, so they read on the field's black and on its peak -->
         <svg
@@ -106,9 +143,12 @@
   </div>
   {#if !bare}
     <div class="flex w-14 shrink-0 flex-col items-start gap-1 text-[10.5px] faint num">
-      <span>{kind === "eps" ? span[1].toFixed(2) : "peak"}</span>
-      <canvas bind:this={bar} width="1" height="256" class="w-3 flex-1 rounded-sm border border-base-content/10" style="max-height: {maxHeight - 40}px"></canvas>
-      <span>{kind === "eps" ? span[0].toFixed(2) : "0"}</span>
+      <span>{ends ? ends[1] : kind === "eps" ? span[1].toFixed(2) : "peak"}</span>
+      <!-- as tall as the picture beside it: the bar's own size doesn't stretch the row -->
+      <div class="relative min-h-0 w-3 flex-1" style="max-height: {maxHeight - 40}px">
+        <canvas bind:this={bar} width="1" height="256" class="absolute inset-0 h-full w-full rounded-sm border border-base-content/10"></canvas>
+      </div>
+      <span>{ends ? ends[0] : kind === "eps" ? span[0].toFixed(2) : "0"}</span>
     </div>
   {/if}
 </div>

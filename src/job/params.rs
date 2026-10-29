@@ -26,9 +26,36 @@ const OWN: [&str; 2] = ["wavelength", "width"];
 pub(super) fn task<T: DeserializeOwned>(job: &crate::run::Job) -> Result<T> {
     // a job's device's ports, which its sources and monitors find by name
     let known = super::device::named_ports(job)?;
-    resolve_with(job.task(), None, &known)?
-        .try_into()
+    let mut task = resolve_with(job.task(), None, &known)?;
+    if let Some(dir) = job.dir() {
+        found_in(&mut task, dir);
+    }
+    task.try_into()
         .map_err(|e: toml::de::Error| task_error(e.to_string()))
+}
+
+/// Every `"gds"` shape's `file` in `table`, however deep (in an `of`, an element, a cell's
+/// shapes, a body), found from `dir` when it is relative: the job file's folder.
+fn found_in(table: &mut Table, dir: &std::path::Path) {
+    if table.get("type").and_then(Value::as_str) == Some("gds")
+        && let Some(Value::String(file)) = table.get_mut("file")
+        && std::path::Path::new(file.as_str()).is_relative()
+    {
+        *file = dir.join(file.as_str()).display().to_string();
+    }
+    for (_, value) in table.iter_mut() {
+        match value {
+            Value::Table(t) => found_in(t, dir),
+            Value::Array(items) => {
+                for item in items {
+                    if let Value::Table(t) = item {
+                        found_in(t, dir);
+                    }
+                }
+            }
+            _ => {}
+        }
+    }
 }
 
 /// The task with the parameter `set.0` at the value `set.1`, as the kind's table `T`.

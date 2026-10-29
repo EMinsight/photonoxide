@@ -10,10 +10,11 @@
 //! - `physics = "heat"`: `[task.thermal_conductivity]` gives each medium's k in W/(m·K), by its
 //!   name (a catalogue material's, as `Si` and `SiO2` in the presets, or a region's); a number,
 //!   or `[across, up]`. A medium it doesn't name takes the catalogue's conductivity
-//!   ([`crate::material::catalogue::conductivity`]: Si, SiO2, W, Ti, Pt) at `temperature_k`
-//!   (300 K by default): a stack layer's material with a film model (silicon) the film's at
-//!   that layer's thickness, and a substrate of the same material, drawn apart as
-//!   `"Si (substrate)"`, the bulk's. The run records each value it took and where from.
+//!   ([`crate::material::catalogue::conductivity`]: Si, SiO2, W, Ti, Pt; TiN only as a layer of
+//!   its 86 nm film) at `temperature_k` (300 K by default): a stack layer's material with a
+//!   film model (silicon) the film's at that layer's thickness, and a substrate of the same
+//!   material, drawn apart as `"Si (substrate)"`, the bulk's. The run records each value it took
+//!   and where from.
 //!   `[[task.heater]]` rectangles give W/m, `[[task.sink]]` rectangles hold a temperature.
 //! - `physics = "electrostatic"`: `[task.permittivity]` the relative static permittivities;
 //!   `[[task.conductor]]` rectangles held at a potential (V), whose capacitance matrix (F/m) the
@@ -105,10 +106,11 @@
 //! ```
 //!
 //! The run records an [`Event::StaticField`] per field (the temperature or the potential, and a
-//! current's Joule heat), each in its unit on pixels of about the finest step, and an
-//! [`Event::StaticResult`] with the grid and the numbers: the probes' means, the largest value,
-//! the heat or charge of each held rectangle, what leaves through each side, the balance's
-//! imbalance, and a capacitance matrix or the contacts' currents and Joule power.
+//! current's Joule heat), each in its unit on pixels of about the finest step (with
+//! `[task.electro_optic]`, the electrodes' |E| and the mode's |E|² on the mode's window too),
+//! and an [`Event::StaticResult`] with the grid and the numbers: the probes' means, the largest
+//! value, the heat or charge of each held rectangle, what leaves through each side, the
+//! balance's imbalance, and a capacitance matrix or the contacts' currents and Joule power.
 
 use std::collections::BTreeMap;
 
@@ -611,6 +613,16 @@ fn catalogued(
             .map(|l| l.thickness.to_um())
             .collect();
         let Some((film, &d)) = c.film().zip(films.first()) else {
+            // a conductivity the catalogue gives for a film only (TiN's) isn't taken for a
+            // medium whose thickness no layer gives
+            if let Some(p) = &bulk.thickness {
+                return Err(task_error(format!(
+                    "[task.thermal_conductivity] has no value for the medium {m}, and the \
+                     catalogue gives its conductivity only for a film {} µm thick ({}), which \
+                     no layer of the stack is: give it a value",
+                    p.default, bulk.name
+                )));
+            }
             let k = bulk
                 .conductivity(Some(kelvin), None)
                 .map_err(|e| model_error(m, e))?;

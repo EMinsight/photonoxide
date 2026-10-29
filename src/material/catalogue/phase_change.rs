@@ -371,6 +371,13 @@ pub(crate) fn sb2s3_density() -> f64 {
     4.0 * GUREVICH_MOLAR * 1e-3 / (AVOGADRO * a * b * c * 1e-30)
 }
 
+/// Kaito et al.'s density of evaporated amorphous Sb₂S₃ films, kg/m³, and its uncertainty: Table
+/// 1's 3.42 ± 0.06 g/cm³.
+pub(crate) const KAITO_DENSITY: (f64, f64) = (3420.0, 60.0);
+
+/// Kaito et al.'s bulk crystal density (g/cm³) and density deficit (%) beside it, Table 1.
+pub(crate) const KAITO_TABLE_1: (f64, f64) = (4.64, 26.0);
+
 /// Gurevich et al.'s C_p(298.15 K) of crystalline Sb₂S₃, J/(mol·K), and its uncertainty.
 pub(crate) const GUREVICH_CP_298: (f64, f64) = (119.54, 0.06);
 
@@ -475,7 +482,10 @@ fn sb2se3() -> PhaseChange {
         )),
         amorphous_specific_heat: None,
         amorphous_density: None,
-        missing: vec![],
+        missing: vec![missing(
+            "the amorphous state's ρ",
+            "no measurement found: the crystal's is taken for both states until one is (an X-ray reflectivity of as-deposited and crystallized films is what's wanted), coming",
+        )],
         references: references(&[
             "delaney-2020",
             "delaney-2020-data",
@@ -539,10 +549,21 @@ fn sb2s3() -> PhaseChange {
             ("gurevich-2002", "Section 1, the cell"),
         )),
         amorphous_specific_heat: None,
-        amorphous_density: None,
+        amorphous_density: Some(constant(
+            r"\rho_a",
+            "density, amorphous",
+            KAITO_DENSITY.0,
+            Some(KAITO_DENSITY.1),
+            "kg/m³",
+            "vacuum-evaporated films (the source at about 800 °C, 2e-3 Pa) on KCl at room temperature, stripped free onto holey carbon, amorphous by their halo rings: 3.42 ± 0.06 g/cm³ against the bulk crystal's 4.64, 26 % less, which the authors put down to voids between micro-crystallites. Measured as in their ref. 8 (Shiojiri et al., Jpn. J. Appl. Phys. 16, 1481 (1977)), a method this paper doesn't describe, on films of unstated thickness (those imaged are 8 to 28 nm). It disagrees, unexplained, with Kepič et al. 2024: their pulsed-laser-deposited films thin by about 12 % on crystallizing (250 °C for 5 min; Section 2, p. 4, the PDF's p. 5), which with the area held and no mass lost is about 0.88 of the crystal's density, against Kaito et al.'s 0.74",
+            (
+                "kaito-1984",
+                "Table 1 (p. 160), Sections 2 and 3 (pp. 156, 159)",
+            ),
+        )),
         missing: vec![missing(
-            "the amorphous state's ρ and c_p",
-            "Kassem et al. 2023 match their glass's simulation to its measured density without printing it; Aryana et al. 2023's 4150 kg/m³ cites Popescu's book, not read, coming",
+            "the amorphous state's c_p",
+            "not measured in the papers in hand (Gurevich et al. measure the crystal); none found yet, coming",
         )],
         references: references(&[
             "delaney-2020",
@@ -550,6 +571,8 @@ fn sb2s3() -> PhaseChange {
             "aryana-2023",
             "gurevich-2002",
             "kassem-2023",
+            "kaito-1984",
+            "kepic-2024",
         ]),
     }
 }

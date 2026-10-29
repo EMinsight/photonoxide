@@ -32,6 +32,10 @@ papers:
     doi: 10.1007/s003400200818
   - cite: "D. Chelladurai et al., Nat. Mater. 24, 868 (2025)"
     doi: 10.1038/s41563-025-02158-1
+  - cite: "A. Suceava et al., Adv. Mater. 38, e07564 (2025)"
+    doi: 10.1002/adma.202507564
+  - cite: "X. Tian et al., arXiv:2604.23259 (2026)"
+    doi: 10.48550/arXiv.2604.23259
   - cite: "I. Shoji, T. Kondo, A. Kitamoto, M. Shirane, R. Ito, J. Opt. Soc. Am. B 14, 2268 (1997)"
     doi: 10.1364/JOSAB.14.002268
   - cite: "D. A. Roberts, IEEE J. Quantum Electron. 28, 2057 (1992)"
@@ -72,10 +76,16 @@ papers:
     doi: 10.1140/epjb/e2002-00177-x
   - cite: "C. Y. Ho, R. W. Powell, P. E. Liley, J. Phys. Chem. Ref. Data 1, 279 (1972)"
     doi: 10.1063/1.3253100
+  - cite: "W. Tsai, M. Delfino, J. A. Fair, D. Hodul, J. Appl. Phys. 73, 4462 (1993)"
+    doi: 10.1063/1.352785
+  - cite: "B. T. Kearney, B. Jugdersuren, J. C. Culbertson, P. A. DeSario, X. Liu, Thin Solid Films 661, 78 (2018)"
+    doi: 10.1016/j.tsf.2018.07.001
   - cite: "R. K. Kremer et al., Solid State Commun. 131, 499 (2004)"
     doi: 10.1016/j.ssc.2004.06.022
   - cite: "C. J. Glassbrenner, G. A. Slack, Phys. Rev. 134, A1058 (1964)"
     doi: 10.1103/PhysRev.134.A1058
+  - cite: "P. Goel, C. Kauppinen, R. Raju, I. Tittonen, Nanoscale Adv. 8, 612 (2026)"
+    doi: 10.1039/d5na00914f
   - cite: "Y. S. Ju, K. E. Goodson, Appl. Phys. Lett. 74, 3005 (1999)"
     doi: 10.1063/1.123994
   - cite: "R. W. Powell, C. Y. Ho, P. E. Liley, NSRDS-NBS 8 (1966)"
@@ -135,8 +145,10 @@ validation:
   - material/ingap-ferrini-table-consistency
   - material/ingap-ferrini-table-knots
   - material/conductivity-tables
+  - material/tin-goel-zt
   - material/silicon-kremer-ho
   - material/silicon-glassbrenner-table
+  - material/tin-tsai-eq-3
   - material/silicon-glassbrenner-ho
   - material/silicon-film-ju-goodson
   - material/silicon-film-220
@@ -191,6 +203,8 @@ media a job gives no value ([static](static.md#as-a-job)).
 | W | recommended values | 200–1000 K (±3 %) | 174 | Ho et al. 1972, p. 408 |
 | Ti | recommended values, polycrystalline | 200–1000 K (±10 %) | 21.9 | Ho et al. 1972, p. 407 |
 | Pt | recommended values | 200–1000 K (±3 %) | 71.6 | Ho et al. 1972, p. 379 |
+| TiN, film (default) | plasma-enhanced ALD, 86 nm | room temperature, 86 nm only (no uncertainty stated) | 26.96 | Goel et al. 2026, p. 619 |
+| TiN, film | thermal ALD, 86 nm | room temperature, 86 nm only (no uncertainty stated) | 7.01 | Goel et al. 2026, p. 619 |
 
 - **Tables.** Between the rows at whole hundreds of kelvin (and 250 K) $k$ is a power law of $T$,
   $k_i (T/T_i)^{\ln(k_{i+1}/k_i)/\ln(T_{i+1}/T_i)}$; the tables' rows between them (223.2 …
@@ -213,8 +227,28 @@ media a job gives no value ([static](static.md#as-a-job)).
   1000 K, where Ho et al.'s table stops, electrons and holes carry part of the heat, 40 % at the
   melting point. Ho et al.'s stays the default; Glassbrenner & Slack's reaches cryogenic heaters
   and anneals.
-- **Not here yet.** TiN, whose films' conductivity depends on how they are made (Jacques et al.'s
-  Table 3 takes 28 W/(m·K) from a handbook): a heater job gives it.
+- **TiN, a film.** Its conductivity depends on how the film is made, and the measurements in hand
+  spread over fifty times, so the catalogue gives one film's, for that film only, and a heater
+  job names its own. P. Goel et al. grew 86 nm films by atomic layer deposition (TiCl₄ and NH₃)
+  and measured them at room temperature by nanosecond transient thermoreflectance: 26.96 W/(m·K)
+  plasma-enhanced (26.95 in their conclusions) and 7.01 thermal. The paper states no uncertainty
+  (its fit is in a supplement not in hand), nor the 86 nm films' growth temperature; it calls
+  the value in-plane, which is odd for thermoreflectance through the film. The films are ALD, not
+  sputtered as a heater's TiN usually is, and their resistivity (0.91e-4 Ω·cm for the
+  plasma-enhanced process at 400 °C) was measured on thinner films, 31 nm, not on these.
+  Measured sputtered films lie far lower: V. Moraes et al. (J. Appl. Phys. 119, 225304 (2016))
+  3.1 W/(m·K) for a 580 nm dc-sputtered film by the 3ω method, 2.15 of it phonons (abstract,
+  Table II); K. Jagannadham (J. Vac. Sci. Technol. A 33, 031514 (2015)) 0.53 to 4.7 W/(m·K) for
+  seven films 0.7 to 1.2 µm thick sputtered onto silicon at 300 to 600 °C, by transient
+  thermoreflectance, ±15 % (Table II). They are the spread, not averaged; Jacques et al.'s Table 3
+  takes 28 W/(m·K) from a handbook. The models are the 86 nm film at 300 K (room temperature
+  taken so) and nothing else, so a heat job takes one only for a stack layer of TiN 86 nm thick,
+  and asks for a value otherwise. The check: their Eq. (3), $zT = S^2\sigma T/\kappa$, with the
+  thermal film's power factor (4.95 µW m⁻¹ K⁻²) and 7.01 gives 2.1e-4 at 300 K against their
+  0.0002, within half a unit of that printed digit, which is the print's resolution, not an
+  uncertainty (`material/tin-goel-zt`); the plasma-enhanced film's (512 µW m⁻¹ K⁻², 26.96) gives
+  0.0057 at 300 K against their 0.0056, which holds below 297.5 K: their room temperature isn't
+  stated, so that one is noted, not a case.
 
 ## Microwave permittivities and loss tangents
 
@@ -377,15 +411,71 @@ the catalogue takes them from the primary papers, read in full:
   value at 430 K, not room temperature's. M. Kassem et al., J. Mater. Chem. C 11, 4654 (2023),
   doi:10.1039/d3tc00081h, print neither the glass's density nor its melting point (they mark it on
   their figures).
+- **Amorphous Sb₂S₃'s density:** C. Kaito, N. Nakamura, T. Yoshida, M. Shiojiri, J. Cryst. Growth
+  66, 156 (1984), doi:10.1016/0022-0248(84)90086-1, Table 1: 3.42 ± 0.06 g/cm³ for films
+  evaporated onto KCl at room temperature (the source at about 800 °C) and stripped free, amorphous
+  by their diffraction halos, against the bulk crystal's 4.64, 26 % less; Table 1's two densities
+  give 26.29 % (`material/pcm-sb2s3-kaito-deficit`). The catalogue takes 3420 ± 60 kg/m³ for the
+  amorphous state. The paper measures it as its ref. 8 (Shiojiri et al. 1977) does, a method it
+  doesn't describe, on films whose thickness it doesn't give (those it images are 8 to 28 nm), and
+  puts the deficit down to voids between micro-crystallites. It disagrees with P. Kepič et al.,
+  New J. Phys. 26, 013005 (2024), doi:10.1088/1367-2630/ad1696, whose pulsed-laser-deposited films
+  thin by about 12 % on crystallizing (250 °C for 5 min; Section 2, p. 4): with the area held and
+  no mass lost, that is about 0.88 of the crystal's density, against Kaito et al.'s 0.74 (0.73 of
+  the 4663 kg/m³ above). The papers don't explain the difference (the films are made differently,
+  and Kepič et al. give a thickness change, not a density); it is noted, not resolved. No
+  measurement of amorphous Sb₂Se₃'s density was found: its amorphous state takes the crystal's.
 
 So every material has $T_c$, $T_m$, κ of both states, $c_p$ and ρ, what a switching pulse needs;
 GST's states differ in ρ and $c_p$ (`PhaseChange::density_of`, `specific_heat_of`,
-`heat_capacity_of`: ρc_p 1.40 MJ/(m³·K) amorphous, 1.24 crystalline), and where a state has no
-value of its own it takes the crystal's: Sb₂Se₃'s and Sb₂S₃'s amorphous densities are coming. A
+`heat_capacity_of`: ρc_p 1.40 MJ/(m³·K) amorphous, 1.24 crystalline), Sb₂S₃'s in ρ (1.20 and
+1.64 MJ/(m³·K)), and where a state has no value of its own it takes the crystal's: Sb₂Se₃'s
+amorphous density and Sb₂S₃'s amorphous $c_p$ are coming. A
 film crystallizes when held above $T_c$ long enough (milliseconds for
 Sb₂Se₃ by Lawson et al.; the kinetics aren't modelled) and is amorphized when it melts and is
 quenched; latent heat doesn't change when a film first reaches $T_m$, so the switching
 thresholds need none.
+
+## Electrical resistivities
+
+`catalogue::resistivities()` has measured films' electrical resistivity (`catalogue::
+resistivity("TiN")`), what a heater's resistance, and so its voltage for a power, takes: each
+value is films made one way, with their thickness, the temperature coefficient of resistance
+(TCR) where given, and the paper; `ResistivityValue::conductivity` gives it in S/m. A film's
+resistivity depends on how it was made far more than on its material, so a heater's own film
+should be chosen, not an average.
+
+| TiN film | Thickness | ρ at room temperature (µΩ·cm) | TCR (per K) | Source |
+|---|---|---|---|---|
+| reactively sputtered, uncollimated, 40 °C | 45–100 nm | 250–350 | 2.28e-4 (5–280 K) | Tsai et al. 1993, Tables II, III |
+| collimated, 40 °C | 45–100 nm | 205–215 | 2.64e-4 | Tsai et al. 1993 |
+| uncollimated, 500 °C | 45–100 nm | 175–200 | — | Tsai et al. 1993 |
+| collimated, 40 °C, −115 V bias | 45–100 nm | 120–135 | 5.61e-4 | Tsai et al. 1993 |
+| collimated, 500 °C | 45–100 nm | 65–70 | 1.018e-3 | Tsai et al. 1993 |
+| collimated, 500 °C, −100 V bias | 45–100 nm | 45–60 | 1.355e-3 | Tsai et al. 1993 |
+| RF sputtered, 600 °C (sample F) | 58.0 nm | 70.2 | 9.5e-4 (room temperature–500 °C) | Kearney et al. 2018, Section 3 |
+| RF sputtered, 350 °C, annealed 600 °C in vacuum (sample D) | 62.5 nm | 78.0 | 9.9e-4 | Kearney et al. 2018 |
+
+- **Tsai et al.** sputtered Ti in 40 % N₂/Ar onto thermal oxide and measured each film with a
+  four-point probe minutes after it left the chamber: in air its sheet resistance rose up to 8 %
+  in 12 hours (5 % for the collimated films), which they put down to oxygen at the grain
+  boundaries. Collimating the flux, heating the substrate, a bias and a high rate each lowered the
+  resistivity, to 45 µΩ·cm against a single crystal's 23. Their Eq. (3), $\rho = \rho_0(1 +
+  0.375\,l_0/d) + \rho_\mathrm{grain}$ with $\rho_0$ = 23 µΩ·cm, fits their films' thickness
+  dependence (Table IV): for the lowest films it gives 45.3 µΩ·cm at 100 nm, the abstract's 45
+  (`material/tin-tsai-eq-3`), and 55.4 at 45 nm, inside Table II's 45 to 60; for the two films
+  at 40 °C it stays inside Table II's ranges at both ends. For the unbiased films at 500 °C it gives
+  67.8 at 45 nm and 60.2 µΩ·cm at 100 nm, the thick end 4.8 below Table II's 65 to 70; the table
+  doesn't say which thicknesses each row spans, so this is noted rather than a case. Their text
+  also gives 0.0064 per K (6356 ppm) for a 264 nm film at 500 °C, beyond Table III's films and
+  Fig. 8's axis; it isn't taken.
+- **Kearney et al.** RF-sputtered TiN in N₂:Ar 20:1 onto fused silica over 6 nm of Ti, and
+  measured it by van der Pauw at room temperature between cycles to 500 °C; the films deposited
+  at room temperature relax on the first heating (their resistivity falls 35 %), so a film's
+  history matters too. Their text gives 78.0 µΩ·cm to sample E but describes sample D, annealed
+  without breaking the vacuum, and adds that D's is 13 % below E's and 10 % above F's (78.0/70.2
+  = 1.11); their Fig. 2(b) shows it as D's, and so it is taken. E, annealed after exposure to
+  air, has a TCR of 6.9e-4 per K and a resistivity 13 % higher, not printed.
 
 ## Tags
 
@@ -456,6 +546,7 @@ every value a tensor gives is an element its tag names.
 | LiTaO₃ | Bond 1965 (our fit, default) | two-term Sellmeier for $n_o$ and $n_e$, fitted to Bond's Table IV (refractiveindex.info, CC0, checked against the paper) | 0.45–4.0 µm, room temperature, within 6.7e-4 of the table |
 | LiTaO₃ | Abedin & Ito 1996 | $n_{o,e}(\lambda, T)$, Eq. (1), Tables I and II | 0.4–4.0 µm, 25–300 °C (the temperature terms fitted at 468 and 644 nm) |
 | BaTiO₃ (thin film) | Abel et al. 2018, at 1550 nm | constant $n_o = ar n + \Delta n/2$, $n_e = ar n - \Delta n/2$; $ar n$ = 2.286, $\Delta n$ = 0.03 (Supplementary Note 6) | 1.50–1.60 µm |
+| BaTiO₃ (strained film on GdScO₃) | Suceava et al. 2025 | $n_o$ only: four Gaussian oscillators and two poles, Supporting Note S3, Table S1 (our evaluation, every 10 nm) | 0.5–1.6893 µm, room temperature |
 
 Two models are new forms in `Model`: `Model::Pikhtin` (Skauli's Eq. (12), photon energies in eV)
 and `Model::Afromowitz`. Gehrsitz's oscillators $C/(E_i^2 - E^2)$, with $E = 1/\lambda$ in
@@ -560,6 +651,27 @@ congruent Table 1 is printed the right way round.
   1550 nm only, 2.28 to 2.33 for their stoichiometric films). The other films' indices at 1550 nm
   stay as constants (2.26, Chelladurai et al.; 2.29, Eltes et al.): the films' spread, within
   0.026 of Abel et al.'s. 4mm's pattern is 6mm's ($r_{13} = r_{23}$, $r_{33}$, $r_{42} = r_{51}$).
+
+  **A film's dispersion.** A. Suceava et al. (Adv. Mater. 38, e07564 (2025)) measured a 36.53 nm
+  film strained on (110) GdScO₃ by variable-angle spectroscopic ellipsometry (45°, 55° and 65°,
+  271 to 1689 nm) and print their model of its ordinary index (Supporting Note S3, Table S1): four
+  Gaussian oscillators with an infrared and an ultraviolet pole, the model their analysis uses, and
+  four Lorentz oscillators fitted to the same data. The catalogue's model `suceava-2025` is the
+  Gaussian one's $n_o$ from 0.5 µm, where the absorption edge has passed, to 1.6893 µm: 2.317 at
+  1550 nm, where the Lorentz model gives 2.3174. It takes $n$ only: the two models' $k$ at 1550 nm,
+  0.061 and 0.120, differ twofold where their $n$ agree within 2e-4, so the data don't fix it there.
+  The extraordinary index, their ordinary plus an extended-Cauchy difference whose form the paper
+  leaves to the analysis software's manual, isn't reproduced. The check: the catalogue's index,
+  36.53 nm on their GdScO₃ (their Cauchy model), reflects 0.1240 at normal incidence against the
+  0.124 they measured at 4° with the substrate's back reflection cut off
+  (`material/batio3-suceava-reflectance`, within half its last digit; that is ±0.01 in $n$). With
+  the models' $k$ we get 0.1294 and 0.1345, where the paper computes 0.1237 and 0.1292 from its
+  anisotropic model: we don't reproduce those. X. Tian et al. (arXiv:2604.23259 (2026)) grew
+  200–300 nm films on SrTiO₃-buffered silicon by pulsed laser deposition and hybrid MBE and show
+  their index from 400 to 2000 nm (one isotropic layer fitted per film) only as a figure, Fig.
+  4(a); read off it, 2.281 (PLD), 2.262 and 2.309 (hMBE) at 1550 nm, kept as constants. The
+  films' indices at 1550 nm thus run from 2.26 to 2.317 across the papers: Suceava et al.'s strained
+  film the highest, 0.016 above Abel et al.'s $n_o$.
 - **Lithium tantalate:** Casson et al. 2004's unclamped $r_{13}$ and $r_{33}$ at 632.8, 980, 1330
   and 1558 nm (Table 2; 6.92 ± 0.07 and 27.4 ± 0.3 pm/V at 1558 nm), from the deflection per volt
   of a domain-patterned crystal scaled from the literature's 632.8 nm values, with the indices they

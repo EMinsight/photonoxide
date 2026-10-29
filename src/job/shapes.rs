@@ -96,6 +96,22 @@
 //!       shift: [{ at: [-2, 0], by: [-63 nm, 0] }, { at: [2, 0], by: [63 nm, 0] }]
 //! ```
 //!
+//! **GDSII files** ([`crate::geometry::Gds`]). `type = "gds"` draws what a GDSII file's cell
+//! draws on one of its layers, every cell it places flattened into it: `file`, its path from
+//! the job file's folder; `gds_layer = [layer, datatype]`; `cell`, the file's one top cell if
+//! not given; `x` and `y`, a window in the file's coordinates; `origin` and `angle`, where the
+//! file's origin goes and how it turns. The shape's `layer` is the stack's, which gives it its
+//! material and thickness: one shape for each layer of the file the job reads.
+//!
+//! ```yaml
+//! task:
+//!   shape:
+//!     - type: gds
+//!       layer: Si
+//!       file: chip.gds
+//!       gds_layer: [1, 0]
+//! ```
+//!
 //! Each takes an `etch` as the other shapes do. The resolver ([`super::params`]) puts the task's
 //! parameters' definitions (and a sweep's point) in each entry as `parameters` (and `set`), so
 //! that its expressions are parsed in their scope here.
@@ -107,8 +123,8 @@ use super::{EtchSpec, SegmentSpec, path_of, task_error};
 use crate::Result;
 use crate::expr::{Expr, Parameters};
 use crate::geometry::{
-    Array, Between, Bounds, Cell, ClosedCurve, Implicit, Join, Lattice, Mask, Operation, Point,
-    Polar, Polygon, Reference, Shape, Transform,
+    Array, Between, Bounds, Cell, ClosedCurve, Gds, Implicit, Join, Lattice, Mask, Operation,
+    Point, Polar, Polygon, Reference, Shape, Transform,
 };
 use crate::stack::Structure;
 use crate::units::Length;
@@ -164,6 +180,10 @@ pub(super) struct ShapeSpec {
     resize: Option<Vec<ResizeSpec>>,
     cell: Option<String>,
     place: Option<Vec<PlaceSpec>>,
+    /// A `"gds"` shape's GDSII file: its path, from the job file's folder.
+    file: Option<String>,
+    /// A `"gds"` shape's layer in its file: `[layer, datatype]`.
+    gds_layer: Option<[u16; 2]>,
     /// A reference's cell's shapes: put here by the resolver.
     #[schemars(skip)]
     cell_shapes: Option<Vec<ShapeSpec>>,
@@ -205,7 +225,7 @@ struct PlaceSpec {
 }
 
 /// The fields each type takes besides `type`, `layer` and `etch`.
-const FIELDS: [(&str, &[&str]); 18] = [
+const FIELDS: [(&str, &[&str]); 19] = [
     (
         "array",
         &[
@@ -226,6 +246,10 @@ const FIELDS: [(&str, &[&str]); 18] = [
         ],
     ),
     ("reference", &["cell", "place"]),
+    (
+        "gds",
+        &["file", "gds_layer", "cell", "x", "y", "origin", "angle"],
+    ),
     ("between", &["x", "lower", "upper"]),
     ("polar", &["center", "radius"]),
     ("parametric", &["curve"]),
@@ -278,7 +302,7 @@ impl ShapeSpec {
             return Err(task_error(format!(
                 "{bare}: unknown type \"{}\": between, polar, parametric, implicit, mask, rect, \
                  circle, ring, polygon, path, union, intersection, difference, xor, offset, \
-                 round, array or reference",
+                 round, array, reference or gds",
                 self.kind
             )));
         };
@@ -323,6 +347,8 @@ impl ShapeSpec {
             ("resize", self.resize.is_some()),
             ("cell", self.cell.is_some()),
             ("place", self.place.is_some()),
+            ("file", self.file.is_some()),
+            ("gds_layer", self.gds_layer.is_some()),
         ];
         if let Some((name, _)) = given.iter().find(|(n, g)| *g && !takes.contains(n)) {
             return Err(at(format!(
@@ -445,6 +471,7 @@ impl ShapeSpec {
             }
             "array" => self.array(p, what)?,
             "reference" => self.reference(p, what)?,
+            "gds" => self.gds(what)?,
             kind => self.combined(kind, p, what)?,
         })
     }
@@ -683,6 +710,55 @@ impl ShapeSpec {
         Ok(Shape::Reference(
             Reference::new(cell, placements).map_err(reason)?,
         ))
+    }
+
+    /// What a GDSII file's cell draws on one of its layers ([`Gds::shape`]), within the window
+    /// `x` by `y` if given, then turned by `angle` about the file's origin and moved to `origin`.
+    fn gds(&self, what: &str) -> Result<Shape> {
+        let at = |m: String| task_error(format!("{what}: {m}"));
+        let reason = |e: crate::Error| match e {
+            crate::Error::InvalidValue { reason, .. } => at(reason),
+            crate::Error::Parse { what: file, reason } => at(format!("{file}: {reason}")),
+            crate::Error::Io { path, reason } => at(format!("{path}: {reason}")),
+            other => other,
+        };
+        let file = self
+            .file
+            .as_deref()
+            .ok_or_else(|| at("needs file, the GDSII file's path".into()))?;
+        let layer = self
+            .gds_layer
+            .ok_or_else(|| at("needs gds_layer, [layer, datatype] in the file".into()))?;
+        let gds = Gds::read(std::path::Path::new(file)).map_err(reason)?;
+        let cell = match self.cell.as_deref() {
+            Some(c) => c,
+            None => gds.top_cell().map_err(reason)?,
+        };
+        let window = match (self.x_um, self.y_um) {
+            (None, None) => None,
+            (Some(x), Some(y)) => Some(Bounds::new(Point::um(x[0], y[0]), Point::um(x[1], y[1]))),
+            _ => {
+                return Err(at(
+                    "a window takes both x and y, its ranges in the file's coordinates".into(),
+                ));
+            }
+        };
+        let shape = gds.shape(cell, layer, window).map_err(reason)?;
+        let (origin, angle) = (
+            self.origin_um.unwrap_or_default(),
+            self.angle_rad.unwrap_or_default(),
+        );
+        if !(origin[0].is_finite() && origin[1].is_finite() && angle.is_finite()) {
+            return Err(at("origin and angle must be finite".into()));
+        }
+        if origin == [0.0, 0.0] && angle == 0.0 {
+            return Ok(shape);
+        }
+        let t = Transform::rotate(angle, Point::default()).then(&Transform::translate(
+            Length::um(origin[0]),
+            Length::um(origin[1]),
+        ));
+        Ok(shape.transformed(&t))
     }
 
     /// A boolean, offset or rounding of the shapes in `of`.
@@ -928,6 +1004,131 @@ etch = { depth = "70 nm" }
             "pixel = [\"100 nm\", 2]",
             "needs a length",
         );
+    }
+
+    /// A GDSII file in a folder of its own: a 4 × 0.5 µm guide on 1/0 and a 1 µm square on 2/0,
+    /// in cell "guide", placed by "top" at (1, 0) µm; and the folder.
+    fn gds_folder(tag: &str) -> std::path::PathBuf {
+        use crate::geometry::gds_checks::Writer;
+        let dir =
+            std::env::temp_dir().join(format!("photonoxide-gds-{tag}-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let mut w = Writer::new(1e-3, 1e-9);
+        w.begin("guide");
+        w.rect([1, 0], [-2000, -250], [2000, 250]);
+        w.rect([2, 0], [-500, 1000], [500, 2000]);
+        w.end();
+        w.begin("top");
+        w.sref("guide", false, 1.0, 0.0, [1000, 0]);
+        w.end();
+        std::fs::write(dir.join("chip.gds"), w.finish()).unwrap();
+        dir
+    }
+
+    const GDS: &str = r#"
+name = "gds"
+
+[task]
+kind = "structure"
+stack = "soi_220"
+wavelength_um = 1.55
+layer = "Si"
+x_um = [-4.0, 6.0]
+y_um = [-3.0, 3.0]
+step_nm = 100.0
+
+[[task.shape]]
+type = "gds"
+layer = "Si"
+file = "chip.gds"
+gds_layer = [1, 0]
+
+[[task.shape]]
+type = "gds"
+layer = "Si"
+file = "chip.gds"
+cell = "guide"
+gds_layer = [2, 0]
+origin = ["-2 um", 0]
+angle = "90 deg"
+etch = { depth = "70 nm" }
+"#;
+
+    #[test]
+    fn a_gds_file_s_layers_in_a_job() {
+        let dir = gds_folder("job");
+        let job = Job::parse(GDS).unwrap().in_dir(&dir);
+        check(&job).unwrap();
+        let Event::Scene { shapes, .. } = preview(&job).unwrap() else {
+            panic!("a structure's preview is a scene")
+        };
+        assert!(shapes.len() >= 2, "{}", shapes.len());
+        let task: StructureTask = params::task(&job).unwrap();
+        let guide = task.shape[0].shape(0).unwrap();
+        assert!((guide.area() - 2.0).abs() < 1e-13, "{}", guide.area());
+        let s = task.structure().unwrap();
+        // above the rib's etch, which leaves a slab everywhere below it
+        let z = Length::um(s.stack().layer("Si").unwrap().2.to_um() - 0.01);
+        let at = |x: f64, y: f64| s.material_at(Point::um(x, y), z).name().to_owned();
+        // the guide from x = −1 to 3 µm, placed by the top cell
+        assert_eq!(at(2.9, 0.2), "Si");
+        assert_ne!(at(-1.1, 0.0), "Si");
+        // the square, x −0.5 to 0.5 and y 1 to 2 µm in the cell "guide" itself, turned a
+        // quarter (x −2 to −1, y −0.5 to 0.5) and moved 2 µm along −x
+        assert_eq!(at(-3.5, 0.4), "Si");
+        assert_ne!(at(-3.5, 1.2), "Si");
+        // the same file named by its whole path, and a window on it
+        let whole = GDS.replacen(
+            "file = \"chip.gds\"",
+            &format!(
+                "file = {:?}\nx = [\"2 um\", \"5 um\"]\ny = [\"-1 um\", \"1 um\"]",
+                dir.join("chip.gds").display().to_string()
+            ),
+            1,
+        );
+        let task: StructureTask = params::task(&Job::parse(&whole).unwrap()).unwrap();
+        let clipped = task.shape[0].shape(0).unwrap();
+        assert!((clipped.area() - 0.5).abs() < 1e-13, "{}", clipped.area());
+        std::fs::remove_dir_all(&dir).unwrap();
+    }
+
+    #[test]
+    fn what_a_gds_shape_in_a_job_refuses() {
+        let dir = gds_folder("refuses");
+        let bad = |from: &str, to: &str, says: &str| {
+            let job = Job::parse(&GDS.replacen(from, to, 1)).unwrap().in_dir(&dir);
+            let e = check(&job).unwrap_err().to_string();
+            assert!(e.contains(says), "{e}");
+        };
+        bad(
+            "file = \"chip.gds\"",
+            "file = \"missing.gds\"",
+            "#1 (gds): ",
+        );
+        bad(
+            "gds_layer = [1, 0]",
+            "gds_layer = [3, 0]",
+            "draws nothing on 3/0",
+        );
+        bad("gds_layer = [1, 0]\n", "", "needs gds_layer");
+        bad(
+            "gds_layer = [1, 0]",
+            "gds_layer = [1, 0]\ncell = \"chip\"",
+            "no cell \"chip\"",
+        );
+        bad(
+            "gds_layer = [1, 0]",
+            "gds_layer = [1, 0]\nx = [0, \"1 um\"]",
+            "a window takes both x and y",
+        );
+        bad(
+            "gds_layer = [1, 0]",
+            "gds_layer = [1, 0]\nsize = [\"1 um\", \"1 um\"]",
+            "size isn't for this type",
+        );
+        std::fs::write(dir.join("chip.gds"), b"not a GDSII file").unwrap();
+        bad("gds_layer = [2, 0]", "gds_layer = [2, 0]", "HEADER");
+        std::fs::remove_dir_all(&dir).unwrap();
     }
 
     const BOOLEANS: &str = r#"

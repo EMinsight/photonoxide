@@ -291,6 +291,16 @@ pub(crate) fn rules() -> Vec<(&'static str, Rule)> {
             ),
         ),
         (
+            "material/tin-goel-zt",
+            Rule::new(
+                Absolute,
+                Reference,
+                5e-5,
+                Exact,
+                "half a unit of the printed 0.0002: the print's resolution, not an uncertainty, which the paper doesn't state",
+            ),
+        ),
+        (
             "material/silicon-film-ju-goodson",
             Rule::new(
                 Relative,
@@ -308,6 +318,16 @@ pub(crate) fn rules() -> Vec<(&'static str, Rule)> {
                 0.05,
                 Exact,
                 "5 %, Jacques et al.'s 90 W/(m·K) being two digits of Asheghi et al.'s measured layers",
+            ),
+        ),
+        (
+            "material/tin-tsai-eq-3",
+            Rule::new(
+                Absolute,
+                Reference,
+                0.5,
+                Exact,
+                "the abstract's 45 µΩ·cm, printed whole: half a unit of it",
             ),
         ),
         (
@@ -513,6 +533,16 @@ pub(crate) fn rules() -> Vec<(&'static str, Rule)> {
             ),
         ),
         (
+            "material/pcm-sb2s3-kaito-deficit",
+            Rule::new(
+                Absolute,
+                Reference,
+                0.5,
+                Exact,
+                "Table 1's deficit printed in whole percent: half a unit of it",
+            ),
+        ),
+        (
             "material/pcm-slab-closed-form",
             Rule::new(
                 Absolute,
@@ -661,6 +691,16 @@ pub(crate) fn rules() -> Vec<(&'static str, Rule)> {
                 3e-2,
                 Exact,
                 "the films' spread across the three papers",
+            ),
+        ),
+        (
+            "material/batio3-suceava-reflectance",
+            Rule::new(
+                Absolute,
+                Reference,
+                5e-4,
+                Exact,
+                "the measured reflectance's three decimals: half a unit of the last",
             ),
         ),
         // ---- the III-Vs and aluminium nitride ----

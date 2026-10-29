@@ -3,8 +3,9 @@
 //! and Sondheimer's reduction against its limits and a quadrature.
 
 use super::conductivity::{
-    GS_SI, HO_PT, HO_PT_BETWEEN, HO_SI, HO_SI_BETWEEN, HO_TI, HO_TI_BETWEEN, HO_W, HO_W_BETWEEN,
-    JU_GOODSON_PATH_UM, POWELL_SIO2, POWELL_SIO2_BETWEEN, conductivity, power_law, sondheimer,
+    GOEL_THICKNESS_UM, GS_SI, HO_PT, HO_PT_BETWEEN, HO_SI, HO_SI_BETWEEN, HO_TI, HO_TI_BETWEEN,
+    HO_W, HO_W_BETWEEN, JU_GOODSON_PATH_UM, POWELL_SIO2, POWELL_SIO2_BETWEEN, conductivity,
+    power_law, sondheimer,
 };
 use crate::validation::Outcome;
 
@@ -138,6 +139,19 @@ pub(crate) fn glassbrenner_ho() -> Outcome {
         })
         .fold(0.0, f64::max);
     outcome(worst, 0.0, 0.10)
+}
+
+/// Goel et al.'s thermal ALD film: their Eq. (3), zT = S²σT/κ, with its power factor S²σ of
+/// 4.95 µW/(m·K²) (p. 619) and the catalogue's κ at 300 K, against the 0.0002 they print (pp.
+/// 619 and 621). Their room temperature isn't stated; anywhere from 293 to 300 K gives 0.0002.
+pub(crate) fn goel_thermal_zt() -> Outcome {
+    let kappa = k(
+        "tin",
+        "goel-2026-thermal-ald",
+        300.0,
+        Some(GOEL_THICKNESS_UM),
+    );
+    outcome(4.95e-6 * 300.0 / kappa, 2e-4, 5e-5)
 }
 
 /// The midpoint rule's order on 64 and 128 points, which the closed form makes 2.

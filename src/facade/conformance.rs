@@ -722,6 +722,13 @@ pub fn conformance(scratch: &Path) -> Result<Vec<Case>> {
             &[("crystallized", 0.6), ("length", 14.0)][..],
             Some("analytic"),
         ),
+        // and a modulator's arms at a voltage and a frequency, by its closed forms
+        (
+            "tfln-modulator",
+            "TFLN Mach-Zehnder modulator",
+            &[("voltage", 1.5), ("frequency", 40.0), ("loss", 0.5)][..],
+            Some("analytic"),
+        ),
     ] {
         let (d, args) = design(kind, values, fidelity);
         cases.push(case(

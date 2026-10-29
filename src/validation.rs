@@ -17,12 +17,14 @@ use std::f64::consts::TAU;
 use num_complex::Complex64;
 
 use crate::circuit::components::checks as components;
+use crate::material::catalogue::batio3_film;
 use crate::material::catalogue::checks as catalogue;
 use crate::material::catalogue::conductivity_checks;
 use crate::material::catalogue::ferroelectric;
 use crate::material::catalogue::litao3_dndt;
 use crate::material::catalogue::phase_change_checks;
 use crate::material::catalogue::phase_change_thermal;
+use crate::material::catalogue::resistivity;
 use crate::material::catalogue::rf_checks;
 use crate::material::catalogue::thermo_checks;
 use crate::material::{self, Model, Table};
@@ -251,6 +253,8 @@ pub fn rules() -> Vec<(&'static str, Rule)> {
     rules.extend(line::rules());
     rules.extend(devices::rules());
     rules.extend(pcm::rules());
+    rules.extend(eme::rules());
+    rules.extend(modulator::rules());
     rules
 }
 
@@ -494,6 +498,13 @@ pub fn cases() -> Vec<Case> {
             run: conductivity_checks::glassbrenner_ho,
         },
         Case {
+            id: "material/tin-goel-zt",
+            title: r"TiN, an 86 nm thermal-ALD film: Goel et al.'s Eq. (3), $zT = S^2\sigma T/\kappa$, with the film's power factor $S^2\sigma$ = 4.95 µW m$^{-1}$ K$^{-2}$ and the catalogue's $\kappa$ (their 7.01 W/(m·K)) at 300 K, against the zT they print, 0.0002 (shown); the paper states no uncertainty for $\kappa$, so the tolerance is half a unit of that printed digit. The plasma-enhanced film's, the catalogue's default (512 µW m$^{-1}$ K$^{-2}$, 26.96 W/(m·K)), gives 0.0057 at 300 K against their 0.0056, which holds below 297.5 K: their room temperature isn't stated",
+            tier: Tier::Published,
+            source: "P. Goel et al., Nanoscale Adv. 8, 612 (2026), doi:10.1039/d5na00914f, Eq. (3), Section 2.3 (p. 619) and the conclusions (p. 621)",
+            run: conductivity_checks::goel_thermal_zt,
+        },
+        Case {
             id: "material/silicon-film-ju-goodson",
             title: r"Silicon films' conductivity along them at 300 K: Sondheimer's reduction for diffuse surfaces with Ju & Goodson's effective mean free path of 0.3 µm, on Ho et al.'s 148 W/(m·K), against their measured films of 143, 154, 240 and 247 nm (Fig. 2, read off the plot; ±15 % error bars), within 10 %; it falls 24 and 26 % below their 78 and 85 nm films (largest relative deviation from 140 nm shown)",
             tier: Tier::Published,
@@ -506,6 +517,13 @@ pub fn cases() -> Vec<Case> {
             tier: Tier::Published,
             source: "M. Jacques et al., Opt. Express 27, 10456 (2019), doi:10.1364/OE.27.010456, Table 3 (their ref. 32: M. Asheghi et al., J. Heat Transfer 120, 30 (1998)); 5 %",
             run: conductivity_checks::film_220,
+        },
+        Case {
+            id: "material/tin-tsai-eq-3",
+            title: r"TiN's lowest-resistivity films (reactively sputtered, collimated, at 500 °C with −100 V of bias): Tsai et al.'s Eq. (3), $\rho = \rho_0(1 + 0.375\thinspace l_0/d) + \rho_\mathrm{grain}$, with $\rho_0$ = 23 µΩ·cm and their Table IV's $\rho_\mathrm{grain}$ = 14 µΩ·cm and $l_0$ = 96 nm, at 100 nm, the thickest of Table II's films, against the 45 µΩ·cm of their abstract and Table II (µΩ·cm shown); at 45 nm it gives 55.4, inside Table II's 45 to 60",
+            tier: Tier::Published,
+            source: "W. Tsai et al., J. Appl. Phys. 73, 4462 (1993), doi:10.1063/1.352785, Eq. (3), Tables II and IV, abstract",
+            run: resistivity::tsai_lowest,
         },
         Case {
             id: "material/silicon-film-sondheimer-limits",
@@ -648,6 +666,13 @@ pub fn cases() -> Vec<Case> {
             run: phase_change_thermal::sb2s3_density_check,
         },
         Case {
+            id: "material/pcm-sb2s3-kaito-deficit",
+            title: r"Amorphous Sb₂S₃'s density: the catalogue's 3420 kg/m³ (Kaito et al.'s evaporated films, 3.42 ± 0.06 g/cm³) against their bulk crystal's 4.64 g/cm³, a deficit of 26.29 %, against the 26 % their Table 1 prints (percent shown). Kepič et al.'s films thin by about 12 % on crystallizing, which would make it about 12 %: the two disagree, unexplained",
+            tier: Tier::Published,
+            source: "C. Kaito et al., J. Cryst. Growth 66, 156 (1984), doi:10.1016/0022-0248(84)90086-1, Table 1 (p. 160); P. Kepič et al., New J. Phys. 26, 013005 (2024), doi:10.1088/1367-2630/ad1696, Section 2",
+            run: phase_change_thermal::sb2s3_kaito_deficit,
+        },
+        Case {
             id: "material/pcm-slab-closed-form",
             title: r"Both states of a 300 nm Sb₂Se₃ slab on silica under air, TE₀ at 1550 nm (the fits' indices, 3.2853 and 4.0497): the finite-difference slab (mode::slab_fd) at 2.5 nm against the closed form, the larger error in $n_\mathrm{eff}$ (shown)",
             tier: Tier::Analytic,
@@ -751,6 +776,13 @@ pub fn cases() -> Vec<Case> {
             tier: Tier::Published,
             source: "S. Abel et al., Nat. Mater. 18, 42 (2019), doi:10.1038/s41563-018-0208-0, Supplementary Note 6; F. Eltes et al., J. Lightwave Technol. 37, 1456 (2019), doi:10.1109/JLT.2019.2893500, Section IV; D. Chelladurai et al., Nat. Mater. 24, 868 (2025), doi:10.1038/s41563-025-02158-1, Methods; C. Deng et al., Light Sci. Appl. 15, 21 (2026), doi:10.1038/s41377-025-02081-9",
             run: ferroelectric::batio3_films,
+        },
+        Case {
+            id: "material/batio3-suceava-reflectance",
+            title: r"Barium titanate, a strained film on GdScO₃: the catalogue's ordinary index at 1550 nm (Suceava et al.'s Gaussian-oscillator model, 2.317, without its $k$), 36.53 nm on their GdScO₃ (their Cauchy model, 2.006), its reflectance at normal incidence against the 0.124 they measured at 4° with the substrate's back reflection cut off (shown). With the models' $k$ (0.061 Gaussian, 0.120 Lorentz) it is 0.1294 and 0.1345, where the paper computes 0.1237 and 0.1292: not reproduced",
+            tier: Tier::Published,
+            source: "A. Suceava et al., Adv. Mater. 38, e07564 (2025), doi:10.1002/adma.202507564, Supporting Information, Note S3: Table S1, the substrate's Cauchy model and the reflectance at 1550 nm",
+            run: batio3_film::suceava_reflectance,
         },
         Case {
             id: "material/gaas-gehrsitz-gap",
@@ -2392,6 +2424,8 @@ pub fn cases() -> Vec<Case> {
     cases.extend(crate::geometry::boolean_checks::cases());
     // and its arrays, lattices and references, with the L3 cavity of Akahane et al. drawn
     cases.extend(crate::geometry::array_checks::cases());
+    // and its GDSII reader, on a file written byte by byte
+    cases.extend(crate::geometry::gds_checks::cases());
     // and its bodies in space, with the L3 cavity as one, and FDTD's smoothing on them
     cases.extend(crate::geometry::body_checks::cases());
     // and graded media, in the planar mode solver and in FDTD
@@ -2435,6 +2469,10 @@ pub fn cases() -> Vec<Case> {
     cases.extend(crate::device::thermo_checks::cases());
     // and the phase-change phase shifters as devices, at analytic and 2D fidelity
     cases.extend(crate::device::pcm_checks::cases());
+    // and eigenmode expansion's: slab steps against closed forms, tapers against FDFD
+    cases.extend(crate::eme::checks::cases());
+    // and the thin-film lithium niobate Mach-Zehnder modulator as a device
+    cases.extend(crate::device::tfln_checks::cases());
     cases
 }
 
@@ -5445,6 +5483,7 @@ fn um(value: f64) -> Wavelength {
 }
 
 mod devices;
+mod eme;
 mod fdfd;
 mod fdtd;
 mod geometry;
@@ -5453,6 +5492,7 @@ mod gpu;
 mod line;
 mod materials;
 mod modes;
+mod modulator;
 mod pcm;
 #[cfg(feature = "gpu")]
 pub use gpu::gpu_report;

@@ -236,8 +236,9 @@ indicator. EHVI and ParEGO (batch E) would serve expensive objectives.
 - **Foundry rules as constraints.** Hammond 2021 imposed linewidth, spacing and area
   constraints. Schubert 2022 used a generator that is feasible by construction.
 - **Lithography models inside the loop.** Khan et al. 2024 (Optics Letters; arXiv): an
-  SWG-to-strip converter's simulated loss with the DUV model was 0.836 dB as designed and 0.111 dB
-  designed with the model (their Table 1).
+  SWG-to-strip converter's simulated insertion loss at 1320 nm with the DUV model was 0.836 dB as
+  designed and 0.111 dB designed with the model (their Table 1); measured, with the DUV process
+  emulated, 1.321 and 0.611 dB averaged over 1305–1325 nm (their Table 2).
 
 **What each needs from the optimizer:** constraint values and their Jacobians (MMA), and min-max
 through an epigraph variable. All of these are formulations that photonoxide supplies. genoxide
@@ -599,7 +600,7 @@ Every DOI below was checked on Crossref on 2026-10-08.
 - C. Shang et al., ACS Photonics 10, 1019 (2023). [10.1021/acsphotonics.3c00040](https://doi.org/10.1021/acsphotonics.3c00040)
 - M. Chen et al., J. Opt. Soc. Am. B 41, A161 (2024). [10.1364/JOSAB.506412](https://doi.org/10.1364/JOSAB.506412)
 - M. J. Probst et al., Opt. Express 32, 31448 (2024). [10.1364/OE.527442](https://doi.org/10.1364/OE.527442)
-- S. R. Khan et al., Opt. Lett. 50, 117 (published online 18 December 2024; the 1 January 2025 issue), arXiv:2410.07353. Crossref lists the first author as "Shaheer Raza", and arXiv as "Shaheer Khan". [10.1364/OL.543961](https://doi.org/10.1364/OL.543961)
+- S. Raza, M. Hammood, N. A. F. Jaeger, L. Chrostowski, Opt. Lett. 50, 117 (2024; published online 18 December 2024, the 1 January 2025 issue), arXiv:2410.07353. Optica and Crossref give the first author as "Shaheer Raza", the preprint as "Shaheer Khan" (hence "Khan et al." above). [10.1364/OL.543961](https://doi.org/10.1364/OL.543961)
 - S. Mason et al., arXiv:2509.07233 (2025), no journal DOI yet.
 
 **Evolutionary, Bayesian and multi-objective photonics**

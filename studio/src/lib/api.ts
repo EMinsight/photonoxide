@@ -272,6 +272,10 @@ export const api = {
   deviceJobRead: (text: string) => invoke<JobForm>("device_job_read", { text }),
   /** A design on the cells the model chosen solves on: from above, and on the cut. */
   deviceSolved: (spec: DeviceSpec, compute: Compute, normal: "x" | "y", at: number) => invoke<Solved>("device_solved", { spec, compute, normal, at }),
+  /** A thermo-optic shifter's temperature rise at its power (P_π when that is zero), by its 2D model: isotherms, the media's edges and the mode's weights over it. */
+  deviceTemperature: (spec: DeviceSpec) => invoke<Temperature>("device_temperature", { spec }),
+  /** The lines where a picture takes each of `levels` (isotherms, a mode's outline). */
+  rasterContours: (raster: Raster, levels: number[]) => invoke<Isoline[]>("raster_contours", { raster, levels }),
   chipDevice: (device: DeviceRef) => invoke<InstanceDevice>("chip_device", { device }),
   chipDeviceRef: (spec: DeviceSpec) => invoke<DeviceRef>("chip_device_ref", { spec }),
   chipOptimizeInfo: (chip: Chip) => invoke<ChipOptimizeInfo>("chip_optimize_info", { chip }),
@@ -582,6 +586,38 @@ export interface Solved {
   /** How many times coarser than the solver's the pictures' cells are (1: its own). */
   coarser: number;
   note: string;
+}
+
+/** A line on a picture: its points, µm, in the picture's coordinates. */
+export type Line = [number, number][];
+/** The lines where a picture takes one value. */
+export interface Isoline {
+  level: number;
+  lines: Line[];
+}
+/** A thermo-optic shifter's temperature by its 2D model (studio/src-tauri/src/devices/fields.rs). */
+export interface Temperature {
+  /** The rise above the ambient, K: x across (0 at the guide's centre), y up (0 at the buried oxide's top), µm. */
+  raster: Raster;
+  /** Where the media change on the picture. */
+  outline: Line[];
+  /** Round levels of the rise, K. */
+  isotherms: Isoline[];
+  /** The mode's thermo-optic weights at half and 1/e² of their largest (levels 0.5 and 0.135). */
+  mode: Isoline[];
+  /** The power the picture is at, mW: the design's, or P_π when the design's is zero (at_pi). */
+  power_mw: number;
+  at_pi: boolean;
+  /** The 2D model's power for a π shift, mW. */
+  p_pi_mw: number;
+  /** The drive per unit length, W/m: the power over the design's length. */
+  watts_per_metre: number;
+  /** The largest rise, K, and where, µm. */
+  peak: number;
+  peak_at: [number, number];
+  /** The rise the mode feels, K: its weights' mean of the rise. */
+  guide: number;
+  grid: string;
 }
 
 /** A device job's text read into the Simulate tab's form. */

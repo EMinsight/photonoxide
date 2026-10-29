@@ -58,7 +58,8 @@ use crate::{Error, Result};
 
 use super::{
     Cells, Design, Device, FdfdGrid, Mesh, Model2d, PcmShifter, RibWaveguide, StripBend,
-    StripCoupler, StripMmi, StripMzi, StripRing, StripWaveguide, StripYBranch, ThermoShifter,
+    StripCoupler, StripMmi, StripMzi, StripRing, StripWaveguide, StripYBranch, TflnModulator,
+    ThermoShifter,
 };
 use crate::circuit::components::MmiKind;
 
@@ -69,8 +70,11 @@ pub struct Spec {
     /// The device, by its kind ([`Device::kind`]): `"waveguide"`, `"bend"`,
     /// `"directional coupler"`, `"all-pass ring"`, `"add-drop ring"`, `"rib waveguide"`,
     /// `"MMI 1x2"`, `"MMI 2x2"`, `"Y-branch"`, `"MZI"`, `"Y-branch MZI"`,
-    /// `"thermo-optic phase shifter"`, `"doped thermo-optic phase shifter"` or
-    /// `"in-guide thermo-optic phase shifter"`.
+    /// `"thermo-optic phase shifter"`, `"doped thermo-optic phase shifter"`,
+    /// `"in-guide thermo-optic phase shifter"`, `"GST phase-change phase shifter"`,
+    /// `"Sb2S3 phase-change phase shifter"`, `"Sb2Se3 phase-change phase shifter"` or
+    /// `"TFLN Mach-Zehnder modulator"` (on its own
+    /// lithium niobate stack: the default stack, left out).
     pub kind: String,
     /// The fidelity it is computed at.
     pub fidelity: Fidelity,
@@ -296,6 +300,19 @@ impl Spec {
             "Sb2Se3 phase-change phase shifter" => {
                 Box::new(PcmShifter::on("sb2se3", stack, &core)?)
             }
+            super::tfln::KIND => {
+                if self.stack != StackSpec::default() {
+                    return Err(Error::invalid(
+                        "device",
+                        format!(
+                            "a {} is on its own stack (a lithium niobate film on oxide over \
+                             silicon, its thicknesses its parameters): leave the stack out",
+                            super::tfln::KIND
+                        ),
+                    ));
+                }
+                Box::new(TflnModulator::new())
+            }
             other => {
                 return Err(Error::invalid(
                     "device",
@@ -303,7 +320,8 @@ impl Spec {
                         "no device \"{other}\": waveguide, bend, directional coupler, all-pass \
                          ring, add-drop ring, rib waveguide, MMI 1x2, MMI 2x2, Y-branch, MZI, \
                          Y-branch MZI, thermo-optic phase shifter, doped thermo-optic phase \
-                         shifter or in-guide thermo-optic phase shifter"
+                         shifter, in-guide thermo-optic phase shifter, GST, Sb2S3 or Sb2Se3 \
+                         phase-change phase shifter or TFLN Mach-Zehnder modulator"
                     ),
                 ));
             }
@@ -397,7 +415,7 @@ impl Grids {
         if solves == "static" && *self != Grids::default() {
             return refuse(
                 "grid",
-                "its heat and mode solves are on its own graded grids, which a validation \
+                "its static and mode solves are on its own graded grids, which a validation \
                  case refines",
             );
         }
@@ -466,7 +484,8 @@ impl Spec {
             "MZI" | "Y-branch MZI" => "none",
             "thermo-optic phase shifter"
             | "doped thermo-optic phase shifter"
-            | "in-guide thermo-optic phase shifter" => "static",
+            | "in-guide thermo-optic phase shifter"
+            | super::tfln::KIND => "static",
             _ => "modes",
         };
         grids.check(kind, solves)?;

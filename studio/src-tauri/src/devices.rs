@@ -32,7 +32,7 @@ use crate::studio::Studio;
 
 /// Each device: the component library's id it stands for, its Academy lesson, and the
 /// published results (examples/) on it.
-pub const DEVICES: [(&str, &str, &str, &[&str]); 17] = [
+pub const DEVICES: [(&str, &str, &str, &[&str]); 18] = [
     (
         "waveguide",
         "waveguide",
@@ -135,6 +135,12 @@ pub const DEVICES: [(&str, &str, &str, &[&str]); 17] = [
         "sb2se3-phase-shifter",
         "modulators",
         &["pcm_delaney"],
+    ),
+    (
+        "TFLN Mach-Zehnder modulator",
+        "tfln-modulator",
+        "modulators",
+        &["tfln_zhang"],
     ),
 ];
 
@@ -1668,6 +1674,7 @@ pub fn read_device(path: String) -> Result<Saved, String> {
 }
 
 pub mod compact;
+pub mod fields;
 pub mod optimizing;
 pub use optimizing::OptimizeIn;
 

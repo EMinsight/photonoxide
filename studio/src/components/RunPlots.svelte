@@ -3,7 +3,6 @@
   import { run, shownField, shownLoss, shownModes, shownScene, sweepAxis } from "../lib/app.svelte";
   import { cutOutline, topOutline } from "../lib/outline";
   import { api } from "../lib/api";
-  import { range } from "../lib/colours";
   import { lossText, modeKind } from "../lib/events";
   import type { Series } from "../lib/plot";
   import { len } from "../lib/units";
@@ -11,6 +10,7 @@
   import FdtdSpectra from "./FdtdSpectra.svelte";
   import Plot from "./Plot.svelte";
   import RasterView from "./RasterView.svelte";
+  import StaticFields from "./StaticFields.svelte";
   import UnitChip from "./UnitChip.svelte";
   import OptimizeResults from "./device/OptimizeResults.svelte";
   import StudyResults from "./device/StudyResults.svelte";
@@ -100,7 +100,7 @@
     </div>
   {/if}
 
-  {#if field || modes.length || run.frames.length}
+  {#if field || modes.length || run.frames.length || run.statics.length}
     <label class="flex cursor-pointer items-center justify-end gap-2 text-xs faint" title="Draw the shapes' edges over the pictures of fields, to tell inside from outside where the field is dark">
       <input type="checkbox" class="checkbox checkbox-xs" bind:checked={outlined} />
       structure outline on the fields
@@ -132,15 +132,8 @@
     </section>
   {/if}
 
-  {#each run.statics as s, k (k)}
-    {@const [lo, hi] = range(s.raster)}
-    <!-- a static job's field on its cross-section, as a picture (its own views come with #421) -->
-    <section class="panel p-5">
-      <h3 class="mb-1 font-semibold">{s.label[0].toUpperCase() + s.label.slice(1)} <span class="font-normal faint">· {s.unit}, on the cross-section</span></h3>
-      <p class="mb-3 text-xs faint">from <span class="num">{lo.toPrecision(4)}</span> {s.unit} (black) to <span class="num">{hi.toPrecision(4)}</span> {s.unit} (pale yellow), {s.axes[0]} across and {s.axes[1]} up</p>
-      <RasterView raster={s.raster} kind="intensity" axes={s.axes} maxHeight={420} quantity="{s.label} ({s.unit})" />
-    </section>
-  {/each}
+  <!-- a static job's fields on its cross-section: temperatures with their isotherms, the electrodes' field with the mode over it -->
+  <StaticFields statics={run.statics} {scene} {outlined} />
 
   {#if field}
     <section class="panel p-5">

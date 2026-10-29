@@ -116,7 +116,7 @@ fn every_device_in_the_library_opens() {
 
 #[test]
 fn the_geometry_and_figures_are_the_librarys_for_the_same_values() {
-    let cases: [(&str, &[(&str, &str)]); 17] = [
+    let cases: [(&str, &[(&str, &str)]); 18] = [
         ("waveguide", &[("width", "0.45"), ("length", "25")]),
         ("bend", &[("radius", "7.5 um"), ("angle", "60 deg")]),
         (
@@ -168,6 +168,10 @@ fn the_geometry_and_figures_are_the_librarys_for_the_same_values() {
             "Sb2Se3 phase-change phase shifter",
             &[("coverage", "0.6"), ("crystallized", "1")],
         ),
+        (
+            "TFLN Mach-Zehnder modulator",
+            &[("gap", "6 um"), ("voltage", "2"), ("frequency", "40")],
+        ),
     ];
     for (kind, parameters) in cases {
         let spec = cheapest(kind, parameters);
@@ -190,18 +194,21 @@ fn the_geometry_and_figures_are_the_librarys_for_the_same_values() {
             assert_eq!(p.direction, q.direction);
             assert_eq!(p.width, q.width.to_um());
         }
-        // a shape for each the library draws
+        // a shape for each the library draws, on its layer (an etched layer's top band: its
+        // bands below, `LN 2` and on, draw the same shapes again)
         let Some(Event::Scene { shapes, .. }) = &view.scene else {
             panic!("no scene")
         };
-        let drawn: usize = g
-            .structure
-            .stack()
-            .layers()
+        let layers = g.structure.stack().layers();
+        let drawn: usize = layers
             .iter()
             .map(|l| g.structure.shapes(&l.name).len())
             .sum();
-        assert_eq!(shapes.len(), drawn, "{kind}");
+        let on_layers = shapes
+            .iter()
+            .filter(|s| layers.iter().any(|l| l.name == s.layer))
+            .count();
+        assert_eq!(on_layers, drawn, "{kind}");
         // the figures, to the bit
         let ours = derived(&spec, &spec.fidelity).unwrap().figures;
         let theirs = d.derived(values, f).unwrap();
@@ -565,6 +572,12 @@ fn every_devices_job_and_study_is_made_checked_and_read_back_into_the_form() {
                 ..ComputeIn::default()
             },
         ] {
+            // a modulator millimetres long is more than an FDTD grid holds: refused, and said so
+            if compute.fdtd.is_some() && d.kind().contains("modulator") {
+                let e = job_text_of(&spec, &compute, "page-job").unwrap_err();
+                assert!(e.contains("cells, more than"), "{e}");
+                continue;
+            }
             let text = job_text_of(&spec, &compute, "page-job")
                 .unwrap_or_else(|e| panic!("{}: {e}", d.kind()));
             assert!(
@@ -822,6 +835,107 @@ fn as_solved_shows_the_cells_the_chosen_model_solves_on() {
     .unwrap();
     assert_eq!(s.step_nm, 50.0);
     assert!(s.top.is_some() && s.cut.is_some());
+}
+
+#[test]
+fn the_temperature_view_is_the_2d_model_s_heat_at_the_design_s_power() {
+    use std::f64::consts::PI;
+    for kind in [
+        "thermo-optic phase shifter",
+        "doped thermo-optic phase shifter",
+        "in-guide thermo-optic phase shifter",
+    ] {
+        // at the defaults the power is zero: the picture is at P_π, and the rise the mode feels
+        // gives a phase of π
+        let spec = design(kind, &[]);
+        let t = fields::temperature(&spec).unwrap();
+        let s = spec.spec().unwrap();
+        let (_, d) = s.build().unwrap();
+        let values = d.values();
+        assert_eq!(values.get("power"), Some(0.0));
+        let shifter = fields::thermo_shifter(&s).unwrap().shifter(values).unwrap();
+        let (length, lambda) = (
+            values.get("length").unwrap() * 1e-6,
+            values.get("wavelength").unwrap() * 1e-6,
+        );
+        let e = shifter.efficiency().unwrap();
+        assert!(
+            t.at_pi && (t.power_mw / (e.p_pi(0, 0) * 1e3) - 1.0).abs() < 1e-9,
+            "{kind}"
+        );
+        assert_eq!(t.power_mw, t.p_pi_mw);
+        let guide = &shifter.guides()[0];
+        let phase =
+            |t: &fields::Temperature| 2.0 * PI * length * t.guide * guide.thermo_optic() / lambda;
+        assert!((phase(&t) / PI - 1.0).abs() < 1e-9, "{kind}: {}", phase(&t));
+        // at the design's power (once: a solve each): P / L along the guide, and the 2D model's
+        // phase there, its efficiency's 2π s P / λ from the same weights and rise
+        if kind == "thermo-optic phase shifter" {
+            let at = fields::temperature(&design(kind, &[("power", "10")])).unwrap();
+            assert!(!at.at_pi && at.power_mw == 10.0 && at.p_pi_mw == t.p_pi_mw);
+            let w = 10e-3 / length;
+            assert!(
+                (at.watts_per_metre / w - 1.0).abs() < 1e-12,
+                "{}",
+                at.watts_per_metre
+            );
+            let model = e.phase(0, 0, 10e-3);
+            assert!(
+                (phase(&at) / model - 1.0).abs() < 1e-9,
+                "{} {model}",
+                phase(&at)
+            );
+        }
+        // the picture: the guide's centre in it, every pixel a rise up to the peak (none below
+        // the ambient: the in-guide heater's contacts are held at it), the mode feeling less
+        // than the peak
+        let r = &t.raster;
+        assert!(
+            r.x0 < 0.0 && r.x1 > 0.0 && r.y0 < 0.0 && r.y1 > 0.2,
+            "{kind}: {r:?}"
+        );
+        let (lo, hi) = r
+            .values
+            .iter()
+            .fold((f32::MAX, f32::MIN), |(a, b), &v| (a.min(v), b.max(v)));
+        assert!(
+            lo >= 0.0 && f64::from(hi) <= t.peak * (1.0 + 1e-6),
+            "{kind}: {lo} {hi} {}",
+            t.peak
+        );
+        assert!(t.guide > 0.0 && t.guide < t.peak, "{kind}");
+        // isotherms at round levels below the peak, each found; the media's edges; the mode's
+        // two outlines, closed, around the guide's centre
+        assert!(t.isotherms.len() >= 4, "{kind}: {}", t.isotherms.len());
+        for i in &t.isotherms {
+            assert!(
+                i.level < t.peak && !i.lines.is_empty(),
+                "{kind}: {}",
+                i.level
+            );
+        }
+        assert!(t.outline.len() >= 4, "{kind}");
+        assert_eq!(t.mode.len(), 2);
+        for m in &t.mode {
+            let longest = m.lines.iter().max_by_key(|l| l.len()).unwrap();
+            assert_eq!(longest.first(), longest.last(), "{kind}: closed");
+            let (xs, ys): (Vec<f64>, Vec<f64>) = longest.iter().map(|p| (p[0], p[1])).unzip();
+            let span = |v: &[f64]| {
+                v.iter()
+                    .copied()
+                    .fold([f64::MAX, f64::MIN], |s, x| [s[0].min(x), s[1].max(x)])
+            };
+            let (sx, sy) = (span(&xs), span(&ys));
+            assert!(
+                sx[0] < 0.0 && sx[1] > 0.0 && sy[0] < 0.11 && sy[1] > 0.11,
+                "{kind}: {sx:?} {sy:?}"
+            );
+        }
+        assert!(t.grid.contains("heat on"), "{}", t.grid);
+    }
+    // a device without a heater has no temperature
+    let e = fields::temperature(&design("waveguide", &[])).unwrap_err();
+    assert!(e.contains("no heat model"), "{e}");
 }
 
 #[test]

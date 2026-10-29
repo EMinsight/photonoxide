@@ -76,6 +76,10 @@
 //! rotated and moved. [`check`] names an element by its index and a defect by its site. See
 //! `shapes.rs` and docs/methods/arrays.md.
 //!
+//! **GDSII files.** `type = "gds"` reads what a GDSII file's cell draws on a `gds_layer =
+//! [layer, datatype]`, flattened, onto the stack's `layer`; the `file` is found from the job
+//! file's folder ([`crate::run::Job::dir`]). See `shapes.rs` and docs/methods/geometry.md.
+//!
 //! **Components.** `[[task.component]]` draws one of [`crate::generator`]'s components (a
 //! `ring`, `racetrack`, `disk`, `straight`, `taper`, `bend`, `euler_bend`, `s_bend`, `spiral`,
 //! `directional_coupler`, `bent_coupler`, `mmi`, `y_branch`, `crossing`, `bragg_grating`,
@@ -1233,9 +1237,10 @@ pub enum Event {
     /// A field of a static job ([`crate::thermal`], [`crate::electro`]) on its cross-section,
     /// in its own unit (not scaled): each pixel the value of the cell its centre falls in.
     StaticField {
-        /// What it is: `"temperature"` or `"potential"`.
+        /// What it is: `"temperature"` or `"potential"`; with an `electro_optic` table also
+        /// `"electric field |E|"` and `"mode's |E|^2"` on the mode's window.
         label: String,
-        /// Its unit: `"K"` or `"V"`.
+        /// Its unit: `"K"` or `"V"`; `"V/m"` for |E|, `"relative"` for the mode (1 at its peak).
         unit: String,
         /// The axes: across the guide and up, `["y", "z"]`.
         axes: [String; 2],

@@ -13,6 +13,9 @@
 //!   (1966), doi:10.6028/NBS.NSRDS.8), 100 to 900 K.
 //! - The heater metals tungsten, titanium and platinum: Ho et al.'s recommended values for the
 //!   pure, annealed metals, 200 to 1000 K. A deposited film conducts less.
+//! - TiN, a film: Goel et al.'s 86 nm ALD films at room temperature (Nanoscale Adv. 8, 612
+//!   (2026), doi:10.1039/d5na00914f, p. 619), plasma-enhanced (the default) and thermal; for
+//!   that thickness only, since sputtered films measure far lower (the model's notes).
 //!
 //! A table's values between its rows are taken as a power law of T (linear in log k against
 //! log T), which its in-between rows check (the validation cases).
@@ -140,7 +143,14 @@ impl Conductivity {
 
 /// Every material with a thermal conductivity.
 pub fn conductivities() -> Vec<Conductivity> {
-    vec![silicon(), silica(), tungsten(), titanium(), platinum()]
+    vec![
+        silicon(),
+        silica(),
+        tungsten(),
+        titanium(),
+        platinum(),
+        titanium_nitride(),
+    ]
 }
 
 /// The conductivity of the material with this id (`"si"`) or formula as a stack names it
@@ -715,6 +725,107 @@ fn platinum() -> Conductivity {
     }
 }
 
+// ---------------------------------------------------------------------------------------------
+// Titanium nitride, a film
+// ---------------------------------------------------------------------------------------------
+
+/// Goel et al.'s 86 nm films at room temperature, W/(m·K): plasma-enhanced and thermal ALD
+/// (p. 619 and the abstract; the first is 26.95 in the conclusions, p. 621).
+pub(crate) const GOEL_KAPPA: (f64, f64) = (26.96, 7.01);
+
+/// Their films' thickness, µm.
+pub(crate) const GOEL_THICKNESS_UM: f64 = 0.086;
+
+fn goel_peald(_: f64, _: f64) -> f64 {
+    GOEL_KAPPA.0
+}
+
+fn goel_thermal(_: f64, _: f64) -> f64 {
+    GOEL_KAPPA.1
+}
+
+/// The films measured beside Goel et al.'s, sputtered and far lower: the spread, not averaged.
+const TIN_SPREAD: &str = "a TiN film's conductivity depends on how it is made: V. Moraes et \
+    al., J. Appl. Phys. 119, 225304 (2016), measure a 580 nm dc-sputtered film (500 °C, on \
+    Si(100)) by the 3ω method at 3.1 W/(m·K) at room temperature, 2.15 of it phonons (abstract, \
+    Table II); K. Jagannadham, J. Vac. Sci. Technol. A 33, 031514 (2015), seven films sputtered \
+    at 300 to 600 °C onto silicon, 0.7 to 1.2 µm thick, at 0.53 to 4.7 W/(m·K) by transient \
+    thermoreflectance, ±15 % (Table II, p. 031514-8). Jacques et al. 2019 take 28 W/(m·K) from a \
+    handbook";
+
+/// One of Goel et al.'s films as a model: an 86 nm film at room temperature (taken as 300 K).
+fn goel_model(peald: bool) -> ConductivityModel {
+    let (id, name, value, eval, how): (_, _, _, Eval, _) = if peald {
+        (
+            "goel-2026-peald",
+            "Goel et al. 2026, plasma-enhanced ALD",
+            GOEL_KAPPA.0,
+            goel_peald,
+            "plasma-enhanced ALD (TiCl₄ and NH₃, 2500 W inductive plasma, Picosun R200)",
+        )
+    } else {
+        (
+            "goel-2026-thermal-ald",
+            "Goel et al. 2026, thermal ALD",
+            GOEL_KAPPA.1,
+            goel_thermal,
+            "thermal ALD (TiCl₄ and NH₃, Picosun R200)",
+        )
+    };
+    ConductivityModel {
+        id: id.into(),
+        name: name.into(),
+        equation: format!(r"k = {value}\ \mathrm{{W\,m^{{-1}}\,K^{{-1}}}}"),
+        symbols: "one measured value: an 86 nm film at room temperature".into(),
+        coefficients: vec![CoefficientTable {
+            caption: "the 86 nm films at room temperature (p. 619)".into(),
+            columns: vec!["film".into(), r"$k$ (W m$^{-1}$ K$^{-1}$)".into()],
+            rows: vec![
+                vec!["plasma-enhanced ALD".into(), "26.96".into()],
+                vec!["thermal ALD".into(), "7.01".into()],
+            ],
+        }],
+        temperature: temperature(300.0, 300.0, 300.0),
+        thickness: Some(Parameter {
+            symbol: "d".into(),
+            name: "film thickness".into(),
+            unit: "µm".into(),
+            min: GOEL_THICKNESS_UM,
+            max: GOEL_THICKNESS_UM,
+            default: GOEL_THICKNESS_UM,
+        }),
+        accuracy: "none stated (the fit is in the paper's supplement, not in hand); the value is \
+                   printed to four figures"
+            .into(),
+        sources: vec![src(
+            "goel-2026",
+            "Section 2.3 (p. 619), the abstract; Section 3.4 (p. 620)",
+        )],
+        default: peald,
+        notes: format!(
+            "an 86 nm film by {how}, on Si or glass (the 86 nm films' growth temperature and cycle \
+             count aren't given), by nanosecond transient thermoreflectance (Linseis TF-LFA, \
+             1064 nm pump, 476 nm probe, Ti/Au transducer 17/176 nm), its multilayer fit taking \
+             bulk TiN's density and heat capacity (5450 kg/m³, 636 J/(kg·K)); the paper calls the \
+             result in-plane. ALD, not sputtered as a heater's TiN usually is. Its resistivity \
+             (0.91e-4 Ω·cm, p. 616, for plasma-enhanced ALD at 400 °C) was measured on thinner \
+             films (31 nm, Table 1), not on this one. Room temperature taken as 300 K. Beside \
+             it, {TIN_SPREAD}"
+        ),
+        eval,
+    }
+}
+
+fn titanium_nitride() -> Conductivity {
+    Conductivity {
+        id: "tin".into(),
+        name: "Titanium nitride (film)".into(),
+        formula: "TiN".into(),
+        models: vec![goel_model(true), goel_model(false)],
+        references: references(&["goel-2026"]),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -731,11 +842,29 @@ mod tests {
     }
 
     #[test]
+    fn tin_is_the_86_nm_film_at_room_temperature_only() {
+        let tin = conductivity("TiN").unwrap();
+        let peald = tin.default_model();
+        assert_eq!(peald.id, "goel-2026-peald");
+        assert_eq!(tin.film().unwrap().id, "goel-2026-peald");
+        assert_eq!(peald.conductivity(None, None).unwrap(), 26.96);
+        assert_eq!(peald.conductivity(Some(300.0), Some(0.086)).unwrap(), 26.96);
+        assert!(peald.conductivity(Some(300.0), Some(0.1)).is_err());
+        assert!(peald.conductivity(Some(350.0), None).is_err());
+        let thermal = tin.model(Some("goel-2026-thermal-ald")).unwrap();
+        assert_eq!(thermal.conductivity(None, None).unwrap(), 7.01);
+        let o = super::super::conductivity_checks::goel_thermal_zt();
+        assert!(o.passed() && (o.measured - 2.118e-4).abs() < 1e-7, "{o:?}");
+        // the plasma-enhanced film's zT at 300 K: 0.0057 against the printed 0.0056
+        assert!((512e-6_f64 * 300.0 / 26.96 - 0.005697).abs() < 1e-6);
+    }
+
+    #[test]
     fn a_material_is_found_by_id_or_by_formula_and_its_models_check_their_ranges() {
         for name in ["Si", "si", "SiO2", "SiO₂", "W", "ti", "Pt"] {
             assert!(conductivity(name).is_some(), "{name}");
         }
-        assert!(conductivity("TiN").is_none());
+        assert!(conductivity("TiN").is_some() && conductivity("GaAs").is_none());
         let si = conductivity("Si").unwrap();
         assert_eq!(si.default_model().id, "ho-1972");
         assert_eq!(si.film().unwrap().id, "ju-goodson-1999");
