@@ -20,9 +20,11 @@ use crate::circuit::components::checks as components;
 use crate::material::catalogue::checks as catalogue;
 use crate::material::catalogue::conductivity_checks;
 use crate::material::catalogue::ferroelectric;
+use crate::material::catalogue::litao3_dndt;
 use crate::material::catalogue::phase_change_checks;
 use crate::material::catalogue::phase_change_thermal;
 use crate::material::catalogue::resistivity;
+use crate::material::catalogue::rf_checks;
 use crate::material::catalogue::thermo_checks;
 use crate::material::{self, Model, Table};
 use crate::mode::Polarization;
@@ -528,6 +530,20 @@ pub fn cases() -> Vec<Case> {
             run: conductivity_checks::sondheimer_order,
         },
         Case {
+            id: "material/rf-krupka-table-1",
+            title: r"Float-zone silicon's loss tangent at 4.8 to 6.8 GHz: Krupka et al.'s Eq. (3), $\tan\delta = (Q_u^{-1} - Q_p^{-1})/p_e$, on their Table I's unloaded and parasitic Q factors and filling factors, against the catalogue's $\tan\delta$ (their printed 1.866, 1.901 and 2.101e-3), within the table's printed digits (largest relative deviation shown)",
+            tier: Tier::Published,
+            source: "J. Krupka et al., IEEE Trans. Microw. Theory Tech. 54, 3995 (2006), doi:10.1109/TMTT.2006.883655, Eq. (3) and Table I",
+            run: rf_checks::krupka_table_1,
+        },
+        Case {
+            id: "material/rf-lamb-table-1",
+            title: r"Lamb's compilation of millimetre-wave dielectrics: on the 22 rows the catalogue takes from his Table I (fused silica, crystalline quartz, sapphire and silicon, 2 to 300 GHz), his Eq. (6), $\varepsilon' = n^2$, against the $\varepsilon'$ he prints beside $n$, within each row's printed digits (largest deviation shown, in units of that bound). His fused silica at 393 GHz (n 1.9469, $\varepsilon'$ 3.801, whose root is 1.9496) isn't taken",
+            tier: Tier::Published,
+            source: "J. W. Lamb, Int. J. Infrared Millim. Waves 17, 1997 (1996), doi:10.1007/BF02069487, Eq. (6) and Table I, pp. 2006–2019",
+            run: rf_checks::lamb_table_1,
+        },
+        Case {
             id: "material/pcm-delaney-fits",
             title: r"Phase-change materials: our two-term Sellmeier fits to Delaney et al.'s ellipsometry of amorphous and crystalline Sb₂Se₃ and Sb₂S₃ (with crystalline Sb₂Se₃'s $k$ from the data), against the data at 1.0, 1.31, 1.55 and 1.69 µm (1.2 µm for crystalline Sb₂Se₃): the largest deviation in $n$ or $k$ (shown)",
             tier: Tier::Published,
@@ -729,6 +745,13 @@ pub fn cases() -> Vec<Case> {
             tier: Tier::Published,
             source: "K. S. Abedin, H. Ito, J. Appl. Phys. 80, 6561 (1996), doi:10.1063/1.363679, Fig. 3: the dashes read off the figure's bitmap, 1.2e-4 to 1.5e-4 per pixel",
             run: ferroelectric::litao3_abedin_curves,
+        },
+        Case {
+            id: "material/litao3-moutzouris-fit",
+            title: r"Lithium tantalate, 8 mol% Mg-doped congruent: Moutzouris et al.'s Eq. (1) with their Table 2 against their Table 1's measured indices, the table the catalogue's $dn/dT$ at 1551 nm comes from: $n_o$ and $n_e$ at 450 to 1551 nm and 22 to 200 °C, 100 values, their mean absolute deviation against the paper's ~0.0004 (shown)",
+            tier: Tier::Published,
+            source: "K. Moutzouris et al., Opt. Mater. Express 1, 458 (2011), doi:10.1364/OME.1.000458, Eq. (1), Tables 1 and 2, and p. 462: 'average difference between calculated and measured values ... ~0.0004'",
+            run: litao3_dndt::moutzouris_fit,
         },
         Case {
             id: "material/batio3-abel-films",

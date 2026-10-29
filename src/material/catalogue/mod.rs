@@ -25,6 +25,10 @@
 //! Electrical resistivities of films ([`Resistivity`], [`resistivities`]): TiN's, film by film,
 //! each with how it was made, its thickness and paper.
 //!
+//! Permittivities and loss tangents at microwave and millimetre-wave frequencies
+//! ([`RfDielectric`], [`Entry::rf_dielectric`]): fused silica, crystalline quartz, sapphire,
+//! silicon and lithium niobate, each value with its sample, frequency and paper ([`rf_dielectrics`]).
+//!
 //! Phase-change materials (Sb₂Se₃, Sb₂S₃, GST): each state an entry of its own
 //! ([`Category::PhaseChange`], e.g. `sb2se3-amorphous` and `sb2se3-crystalline`), the pair in a
 //! [`PhaseChange`] with the temperatures that switch it and its thermal properties
@@ -42,12 +46,15 @@ pub(crate) mod conductivity;
 pub(crate) mod conductivity_checks;
 mod entries;
 pub(crate) mod ferroelectric;
+pub(crate) mod litao3_dndt;
 mod models;
 pub(crate) mod phase_change;
 pub(crate) mod phase_change_checks;
 pub(crate) mod phase_change_thermal;
 mod references;
 pub(crate) mod resistivity;
+pub(crate) mod rf;
+pub(crate) mod rf_checks;
 mod symmetry;
 mod tags;
 #[cfg(test)]
@@ -61,6 +68,7 @@ pub use phase_change::{
     PhaseChange, State, figure_of_merit, partly_crystalline, phase_change, phase_changes,
 };
 pub use resistivity::{Resistivity, ResistivityValue, resistivities, resistivity};
+pub use rf::{RfDielectric, RfValue, rf_dielectric, rf_dielectrics};
 pub use symmetry::{Pattern, pattern};
 pub use tags::Tag;
 
@@ -475,6 +483,12 @@ impl Entry {
     /// ([`conductivity`]).
     pub fn conductivity(&self) -> Option<Conductivity> {
         conductivity(&self.id)
+    }
+
+    /// The material's permittivities and loss tangents at microwave frequencies, beside its
+    /// index, when the catalogue has them ([`rf_dielectric`]).
+    pub fn rf_dielectric(&self) -> Option<RfDielectric> {
+        rf_dielectric(&self.id)
     }
 
     /// A reference by its key.

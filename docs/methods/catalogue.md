@@ -16,6 +16,12 @@ papers:
     doi: 10.1364/OL.38.003878
   - cite: "A. W. Elshaari, I. E. Zadeh, K. D. Jöns, V. Zwiller, IEEE Photonics J. 8, 2701009 (2016)"
     doi: 10.1109/JPHOT.2016.2561622
+  - cite: "I. Dolev, A. Ganany-Padowicz, O. Gayer, A. Arie, J. Mangin, G. Gadret, Appl. Phys. B 96, 423 (2009)"
+    doi: 10.1007/s00340-009-3502-3
+  - cite: "K. Moutzouris, G. Hloupis, I. Stavrakas, D. Triantis, M.-H. Chou, Opt. Mater. Express 1, 458 (2011)"
+    doi: 10.1364/OME.1.000458
+  - cite: "A. Bruner, D. Eger, M. B. Oron, P. Blau, M. Katz, S. Ruschin, Opt. Lett. 28, 194 (2003)"
+    doi: 10.1364/OL.28.000194
   - cite: "D. E. Zelmon, D. L. Small, D. Jundt, J. Opt. Soc. Am. B 14, 3319 (1997)"
     doi: 10.1364/JOSAB.14.003319
   - cite: "D. H. Jundt, Opt. Lett. 22, 1553 (1997)"
@@ -78,6 +84,12 @@ papers:
     doi: 10.1063/1.123994
   - cite: "R. W. Powell, C. Y. Ho, P. E. Liley, NSRDS-NBS 8 (1966)"
     doi: 10.6028/NBS.NSRDS.8
+  - cite: "M. Lee, Appl. Phys. Lett. 79, 1342 (2001)"
+    doi: 10.1063/1.1399305
+  - cite: "J. Krupka, J. Breeze, A. Centeno, N. Alford, T. Claussen, L. Jensen, IEEE Trans. Microw. Theory Tech. 54, 3995 (2006)"
+    doi: 10.1109/TMTT.2006.883655
+  - cite: "J. W. Lamb, Int. J. Infrared Millim. Waves 17, 1997 (1996)"
+    doi: 10.1007/BF02069487
   - cite: "E. Z. Ulsig et al., Opt. Express 32, 36986 (2024)"
     doi: 10.1364/OE.523615
   - cite: "International Tables for Crystallography, Vol. A (2016)"
@@ -135,6 +147,8 @@ validation:
   - material/silicon-film-220
   - material/silicon-film-sondheimer-limits
   - material/silicon-film-sondheimer-order
+  - material/rf-krupka-table-1
+  - material/rf-lamb-table-1
 ---
 
 `material::catalogue` lists materials with everything a design needs about them, each number
@@ -206,6 +220,61 @@ media a job gives no value ([static](static.md#as-a-job)).
   and anneals.
 - **Not here yet.** TiN, whose films' conductivity depends on how they are made (Jacques et al.'s
   Table 3 takes 28 W/(m·K) from a handbook): a heater job gives it.
+
+## Microwave permittivities and loss tangents
+
+`catalogue::rf_dielectrics()` has measured $\varepsilon'$ and $\tan\delta$ at microwave and
+millimetre-wave frequencies (`Entry::rf_dielectric`, or `catalogue::rf_dielectric("SiO2")` by id
+or formula; crystalline quartz is `"quartz"`), each value with its sample, field direction,
+frequency, temperature and paper. They are what a travelling-wave electrode's dielectric loss
+weighs ([travelling-wave electrodes](travelling-wave.md#dielectric-loss)); a line job still names
+each medium's loss tangent itself, since the values depend on the sample.
+
+| Material | Sample | f (GHz) | $\varepsilon'$ | $\tan\delta$ | Source |
+|---|---|---|---|---|---|
+| LiNbO₃, field ⟂ c (along y) | congruent, poled | 91–147 | 41.5–43.3 (mean 42.5) | 5.96–6.82e-3 (mean 6.36e-3) | Lee 2001, Fig. 2(a), read off the figure |
+| LiNbO₃, field ∥ c | congruent, poled | 91–147 | 27.9–28.7 (mean 28.2) | 7.02–7.97e-3 (mean 7.45e-3) | Lee 2001, Fig. 2(b), read off the figure |
+| Si | float-zone, p-type, about 12 kΩ·cm | 4.82; 6.69; 6.80 | 11.66 (Fig. 2, 300 K) | 2.101e-3; 1.866e-3; 1.901e-3 | Krupka et al. 2006, Table I |
+| Si | resistivity not given (about 800 Ω·cm) | 100; 245; 250 | 11.878; 11.684; 11.883 | 1.9e-3; 7.6e-4; 7.5e-4 | Lamb 1996 (Afsar & Button; Dutta et al.) |
+| SiO₂, fused | Spectrosil | 10 | 3.78 | 1.7e-4 | Lamb 1996 (von Hippel) |
+| SiO₂, fused | grades QI, QV, QU | 150 | 3.8103; 3.8142; 3.8338 | 5.0–5.3e-4; 5.5–7.1e-4; 1.4–1.5e-3 | Lamb 1996 (Parshin) |
+| SiO₂, fused | Dynasil 4000; Spectrosil WF | 245 | 3.822; 3.8087 | 1.8e-3; 8.0e-4 | Lamb 1996 (Dutta et al.) |
+| SiO₂, fused | Spectrosil | 2–300 | 3.85 | 1e-4 | Lamb 1996 (Harvey) |
+| Quartz, ordinary | crystalline | 35; 140; 245; 300 | 4.43; 4.4420; 4.4348; 4.435 | 3.1e-5; 5.1e-4; 1.0e-4; 2e-4 | Lamb 1996 (Jones; Parshin; Dutta et al.; Birch et al.) |
+| Quartz, extraordinary | crystalline | 140; 245; 300 | 4.6440; 4.6367; 4.640 | 2.4e-4; 1.4e-4; 2e-4 | Lamb 1996 (Parshin; Dutta et al.; Birch et al.) |
+| Sapphire, ordinary | z-cut; α | 100, 200, 300; 140 | 9.3879, 9.3854, 9.3850; 9.400–9.431 | 4.5, 6.0, 8.0e-4; 2.1–2.5e-4 | Lamb 1996 (Afsar; Parshin) |
+| Sapphire, extraordinary | α | 140 | 11.560–11.594 | 1.1–1.4e-4 | Lamb 1996 (Parshin) |
+| Sapphire | field direction not given | 36; 72 | — | 2e-5; 4e-5 | Lamb 1996 (Braginsky & Ilchenko) |
+
+- **Lithium niobate.** M. Lee measured congruent crystals, poled along z, by the phase and
+  magnitude of their reflection in a quasi-optical bridge from 90 to 147 GHz, the field along y
+  or z, averaging 20 spectra; the paper states no temperature. It prints no table: the catalogue
+  reads Fig. 2's 29 points per curve (every 2 GHz from 91 GHz) off its bitmap against the axes'
+  ticks (a pixel is 6e-4 in $n$ and 4e-6 in $\tan\delta$), where a dash leaves a gap carrying the
+  dashes either side to the point. A value is the range over the band, its mean in the notes;
+  $\varepsilon' = n^2$, to $\tan^2\delta/4 \approx 10^{-5}$. The paper finds $\tan\delta$ rising
+  12–13 % across the band, about as $f^{0.25}$, and three times what the same crystals give at
+  10 GHz; a least-squares power law through our reading rises 9.9 % (field along y) and 9.0 %
+  (along z) from 91 to 147 GHz. The points scatter by ±0.22e-3 (3.5 %) about it, which leaves
+  the fitted rise uncertain by about 3 %, and the paper doesn't say how its 12–13 % was found:
+  the difference is noted here, not made a case. Lee's $\varepsilon'$ of 42.5 and 28.2 lie 6.7 %
+  below and 7.7 % above the clamped static values in the entry (45.5 and 26.2, Jazbinšek &
+  Zgonik); Lee finds his $n$ close to the values reported at 1 and 9 GHz.
+- **Silicon.** Krupka et al. measured float-zone p-type silicon as a dielectric resonator and,
+  cut smaller, inside a ceramic ring, from 10 to 400 K. At room temperature the loss is the free
+  holes' conduction, $\sigma/(\omega\varepsilon_0\varepsilon_r)$ (their Eq. (2)), so it falls as
+  $1/f$: their 1.866e-3 at 6.685 GHz is about 12 kΩ·cm, and 1.25e-4 at 100 GHz. A handle wafer's
+  own resistivity sets its loss. They give $\tan\delta$ to the Q factors' 1–2 % and
+  $\varepsilon'$, independent of frequency, to 0.1 %; $\varepsilon'$ isn't printed, and is read
+  off their Fig. 2 at 300 K. Lamb's silicon rows keep $f\tan\delta$ within 6 %, a conduction loss
+  of about 800 Ω·cm.
+- **Lamb's compilation.** Lamb lists each material's values from the papers he cites, without
+  judging between them; the catalogue takes his room-temperature rows from 2 to 300 GHz that give
+  both $\varepsilon'$ and $\tan\delta$, each with the paper he cites (which isn't read here). The
+  loss tangents spread far more than $\varepsilon'$: fused silica's from 1e-4 to 1.8e-3 with the
+  glass and its water, crystalline quartz's ordinary from 3.1e-5 to 5.1e-4 between laboratories.
+  His fused silica at 393 GHz prints $n$ = 1.9469 beside $\varepsilon'$ = 3.801, whose root is
+  1.9496: the same digits with two exchanged, in one or the other, so that row isn't taken.
 
 ## Phase-change materials
 
@@ -562,8 +631,34 @@ congruent Table 1 is printed the right way round.
   and 4.82e-4 against the printed 3.5, 1.4, 5.4 and 5.2e-4; and within 1.2e-4 of its dashed
   curves from 100 to 290 °C. Its temperature terms rest on the two visible wavelengths: at 1550
   nm they give $dn_o/dT = +8.0 \times 10^{-6}$ and $dn_e/dT = -2.7 \times 10^{-6}$ per K (25 to
-  300 °C), where at 468 nm $n_e$ rises by 8e-5 per K. No paper in hand measures the infrared
-  dn/dT to check it, so it stays coming; Bond's fit is the default at room temperature.
+  300 °C), where at 468 nm $n_e$ rises by 8e-5 per K. Bond's fit is the default at room
+  temperature.
+
+  **Measured in the infrared, on doped crystals.** No paper in hand measures the undoped
+  congruent crystal's dn/dT in the infrared, so that stays coming; two measure doped crystals,
+  and the entry has their values as constants, each naming its crystal:
+
+  | Crystal | λ | Measured | At | Source |
+  |---|---|---|---|---|
+  | 0.5 mol% MgO, stoichiometric | 1.0642 µm | $(1/n_e)\,dn_e/dT$ = 1.96e-5; $(1/n_o)\,dn_o/dT$ = 7.9e-7 per K | 25 °C (fit from −30 to 80 °C) | Dolev et al. 2009, Table 1 |
+  | 0.5 mol% MgO, stoichiometric | 3.39 µm | $(1/n_e)\,dn_e/dT$ = 1.59e-5; $(1/n_o)\,dn_o/dT$ = 7.1e-7 per K | 25 °C | Dolev et al. 2009, Table 1 |
+  | 8 mol% Mg, congruent | 1551 nm | $dn_e/dT$ = 5.38e-5; $dn_o/dT$ = 5.9e-6 per K | 22 to 200 °C, mean | Moutzouris et al. 2011, Table 1 (our least-squares slope) |
+
+  Dolev et al. measure the change of the optical thickness by Fabry–Pérot interferometry and the
+  expansion by dilatometry on the same sample, and print linear fits $\beta = a_0 + a_1T$ of
+  $\beta = (1/n)\,dn/dT$ from −30 to 80 °C; with their own Sellmeier $n_e$ (Table 3), 1.96e-5 is
+  $dn_e/dT$ = 4.2e-5 per K at 1.0642 µm. Moutzouris et al. measure both indices by prism coupling
+  at five wavelengths and ten temperatures (Table 1, to the fourth decimal); the slope of a
+  least-squares line through the ten at 1551 nm is ours, ±0.03e-5 from that last decimal, and
+  their fit (Eq. (1), Table 2) gives the table back to 4.02e-4 on average, the ~0.0004 they state
+  (`material/litao3-moutzouris-fit`). Both put the infrared $dn_e/dT$ near +4e-5 to +5e-5 per K,
+  fifteen to twenty times Abedin & Ito's extrapolation and of the other sign, though on other
+  crystals: Moutzouris et al. find the doping raises the coefficient (their Fig. 2(a)). A. Bruner et al. (Opt. Lett. 28, 194 (2003)) fit $n_e(\lambda, T)$
+  of stoichiometric LiTaO₃ from 0.39 to 4.1 µm and 30 to 200 °C to quasi-phase-matched wavelengths
+  and room-temperature indices; phase matching is "sensitive mostly to the dependence of
+  wavelength on refractive indices (the dispersion)" (p. 195), so its $dn_e/dT$ (2.1e-6 per K at
+  1.55 µm and 25 °C, 4.4e-6 at 1.0642 µm) is not a measurement of it, and Dolev et al.'s Fig. 8
+  shows it far from their interferometry. It isn't taken.
 - **GaAs:** $d_{14} = 119$ pm/V at 1.533 µm and 170 at 1.064 µm (Shoji, Table 11); Skauli et al.
   (2002) measure $d_{14}/d_{33}(\mathrm{LiNbO_3}) = 5.01 \pm 0.3$ at 4.1 µm. $r_{41}^S = -1.54$ and
   $-1.50$ pm/V at 1.32 and 1.52 µm (Berseth et al., with their sign convention), and the
@@ -758,7 +853,9 @@ read from the paper itself, which isn't in hand.
   $n(\lambda, T)$ reproduces their Fig. 2's standard deviations to 3e-8
   (`material/litao3-abedin-bond`), their Table I refitted within 6.7e-5
   (`material/litao3-abedin-refit`), Fig. 3's standard deviations within 4.4e-5
-  (`material/litao3-abedin-points`) and its curves within 1.2e-4 (`material/litao3-abedin-curves`).
+  (`material/litao3-abedin-points`) and its curves within 1.2e-4 (`material/litao3-abedin-curves`);
+  Moutzouris et al.'s fit gives their 100 measured indices of the Mg-doped crystal back to
+  4.02e-4 on average, their ~0.0004 (`material/litao3-moutzouris-fit`).
   Barium titanate: Abel
   et al.'s film index at 1550 nm within 0.026 of the other films' 2.26 and 2.29
   (`material/batio3-abel-films`).
