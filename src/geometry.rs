@@ -32,6 +32,10 @@
 //! site's index and place; a [`Reference`] places a named [`Cell`] many times with transforms.
 //! See docs/methods/arrays.md.
 //!
+//! **GDSII files.** [`Gds`] reads a GDSII stream file (read only), and gives what a cell draws
+//! on a (layer, datatype) pair, every cell it places flattened into it, as a shape: the union of
+//! its polygons, in µm. See docs/methods/geometry.md.
+//!
 //! **Bodies in space.** A [`Body`] is a region of (x, y, z): a half-space, an ellipsoid at any
 //! angle (a sphere, an elliptic cylinder, a slab), a box, a cylinder or cone along any axis, any
 //! shape here extruded between two heights with its walls at a sidewall angle, and booleans of
@@ -69,6 +73,10 @@ mod curve_tests;
 mod curves;
 mod flat;
 mod fresnel;
+mod gds;
+pub(crate) mod gds_checks;
+#[cfg(test)]
+mod gds_tests;
 mod implicit;
 mod index;
 mod lattice;
@@ -92,6 +100,7 @@ pub(crate) use body_fill::plane_share;
 pub use clip::{Join, Operation};
 pub use compose::{Boolean, Offset, Rounded};
 pub use curves::{Between, ClosedCurve, Polar};
+pub use gds::{Gds, MAX_DEPTH as GDS_MAX_DEPTH, MAX_POLYGONS as GDS_MAX_POLYGONS};
 pub use implicit::{IMPLICIT_CELLS, Implicit};
 pub use index::Index;
 pub use lattice::{Lattice, LatticeKind, MAX_SITES, Site};

@@ -462,6 +462,18 @@ pub(crate) fn rules() -> Vec<(&'static str, Rule)> {
                 "the cavity drawn to Akahane et al.'s parameters exactly: round-off",
             ),
         ),
+        // ---- GDSII files ----
+        (
+            "geometry/gds",
+            Rule::new(
+                Relative,
+                RoundOff,
+                1e-12,
+                Exact,
+                "whole database units scaled, placed and merged, and excess-64 decoded with one \
+                 rounding: round-off",
+            ),
+        ),
         // ---- bodies ----
         (
             "geometry/bodies/volumes",

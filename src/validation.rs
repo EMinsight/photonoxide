@@ -2369,6 +2369,8 @@ pub fn cases() -> Vec<Case> {
     cases.extend(crate::geometry::boolean_checks::cases());
     // and its arrays, lattices and references, with the L3 cavity of Akahane et al. drawn
     cases.extend(crate::geometry::array_checks::cases());
+    // and its GDSII reader, on a file written byte by byte
+    cases.extend(crate::geometry::gds_checks::cases());
     // and its bodies in space, with the L3 cavity as one, and FDTD's smoothing on them
     cases.extend(crate::geometry::body_checks::cases());
     // and graded media, in the planar mode solver and in FDTD

@@ -6986,6 +6986,21 @@
         "etch": {
           "$ref": "#/$defs/EtchSpec"
         },
+        "file": {
+          "description": "A `\"gds\"` shape's GDSII file: its path, from the job file's folder.",
+          "type": "string"
+        },
+        "gds_layer": {
+          "description": "A `\"gds\"` shape's layer in its file: `[layer, datatype]`.",
+          "items": {
+            "maximum": 65535,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "maxItems": 2,
+          "minItems": 2,
+          "type": "array"
+        },
         "heading": {
           "anyOf": [
             {
@@ -7806,6 +7821,21 @@
         },
         "etch": {
           "$ref": "#/$defs/EtchSpec"
+        },
+        "file": {
+          "description": "A `\"gds\"` shape's GDSII file: its path, from the job file's folder.",
+          "type": "string"
+        },
+        "gds_layer": {
+          "description": "A `\"gds\"` shape's layer in its file: `[layer, datatype]`.",
+          "items": {
+            "maximum": 65535,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "maxItems": 2,
+          "minItems": 2,
+          "type": "array"
         },
         "heading": {
           "anyOf": [

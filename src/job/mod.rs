@@ -76,6 +76,10 @@
 //! rotated and moved. [`check`] names an element by its index and a defect by its site. See
 //! `shapes.rs` and docs/methods/arrays.md.
 //!
+//! **GDSII files.** `type = "gds"` reads what a GDSII file's cell draws on a `gds_layer =
+//! [layer, datatype]`, flattened, onto the stack's `layer`; the `file` is found from the job
+//! file's folder ([`crate::run::Job::dir`]). See `shapes.rs` and docs/methods/geometry.md.
+//!
 //! **Components.** `[[task.component]]` draws one of [`crate::generator`]'s components (a
 //! `ring`, `racetrack`, `disk`, `straight`, `taper`, `bend`, `euler_bend`, `s_bend`, `spiral`,
 //! `directional_coupler`, `bent_coupler`, `mmi`, `y_branch`, `crossing`, `bragg_grating`,
