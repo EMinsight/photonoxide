@@ -492,6 +492,16 @@ pub(crate) fn rules() -> Vec<(&'static str, Rule)> {
             ),
         ),
         (
+            "material/pcm-sb2s3-kaito-deficit",
+            Rule::new(
+                Absolute,
+                Reference,
+                0.5,
+                Exact,
+                "Table 1's deficit printed in whole percent: half a unit of it",
+            ),
+        ),
+        (
             "material/pcm-slab-closed-form",
             Rule::new(
                 Absolute,

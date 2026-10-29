@@ -632,6 +632,13 @@ pub fn cases() -> Vec<Case> {
             run: phase_change_thermal::sb2s3_density_check,
         },
         Case {
+            id: "material/pcm-sb2s3-kaito-deficit",
+            title: r"Amorphous Sb₂S₃'s density: the catalogue's 3420 kg/m³ (Kaito et al.'s evaporated films, 3.42 ± 0.06 g/cm³) against their bulk crystal's 4.64 g/cm³, a deficit of 26.29 %, against the 26 % their Table 1 prints (percent shown). Kepič et al.'s films thin by about 12 % on crystallizing, which would make it about 12 %: the two disagree, unexplained",
+            tier: Tier::Published,
+            source: "C. Kaito et al., J. Cryst. Growth 66, 156 (1984), doi:10.1016/0022-0248(84)90086-1, Table 1 (p. 160); P. Kepič et al., New J. Phys. 26, 013005 (2024), doi:10.1088/1367-2630/ad1696, Section 2",
+            run: phase_change_thermal::sb2s3_kaito_deficit,
+        },
+        Case {
             id: "material/pcm-slab-closed-form",
             title: r"Both states of a 300 nm Sb₂Se₃ slab on silica under air, TE₀ at 1550 nm (the fits' indices, 3.2853 and 4.0497): the finite-difference slab (mode::slab_fd) at 2.5 nm against the closed form, the larger error in $n_\mathrm{eff}$ (shown)",
             tier: Tier::Analytic,
