@@ -1,7 +1,7 @@
 ---
 title: "Geometry"
 module: geometry
-summary: "Shapes kept exact and turned into polygons only on demand: every shape a region with an exact inside test, signed distance and outward normal, tight bounds, area, perimeter and area inside a cell; polygons within a stated tolerance that keep the area; similarity transforms that keep each shape's kind; paths, a centre line of straights, arcs, clothoids placed by the Fresnel integrals, partial Euler bends, Bézier, sine and parametric curves with a width along it; regions between two curves, polar, inside a closed parametric curve and implicit, each an expression, and masks of fill values; and a bounding-volume hierarchy over a layer's shapes, the same bits on any number of threads."
+summary: "Shapes kept exact and turned into polygons only on demand: every shape a region with an exact inside test, signed distance and outward normal, tight bounds, area, perimeter and area inside a cell; polygons within a stated tolerance that keep the area; similarity transforms that keep each shape's kind; paths, a centre line of straights, arcs, clothoids placed by the Fresnel integrals, partial Euler bends, Bézier, sine and parametric curves with a width along it; regions between two curves, polar, inside a closed parametric curve and implicit, each an expression, and masks of fill values; a GDSII file's layers, read and flattened; and a bounding-volume hierarchy over a layer's shapes, the same bits on any number of threads."
 order: 1.5
 papers:
   - cite: "I. E. Sutherland, G. W. Hodgman, Commun. ACM 17, 32 (1974) (clipping to a cell one side at a time)"
@@ -24,6 +24,8 @@ papers:
     doi: 10.1145/37402.37422
   - cite: "Y. Zhang, S. Yang, A. E.-J. Lim, G.-Q. Lo, C. Galland, T. Baehr-Jones, M. Hochberg, Opt. Express 21, 1310 (2013) (the Y-junction's outline, drawn between two curves)"
     doi: 10.1364/OE.21.001310
+  - cite: "Calma Company, GDSII Stream Format Manual, release 6.0 (1987) (the stream's records and its excess-64 numbers)"
+    doi: ""
 validation:
   - geometry/areas
   - geometry/polygons
@@ -53,6 +55,7 @@ validation:
   - geometry/curves/implicit-estimate
   - geometry/curves/mask
   - geometry/curves/zhang-y-junction
+  - geometry/gds
 ---
 
 Every solver, the studio's views and, later, the layout read one model of what is drawn on a
@@ -362,6 +365,61 @@ separated). It is two things, each answering what it is about:
 For a mask of zeros and ones they are the same region. `bounds()` is the box of the pixels with
 $\rho > 0$, which holds both. A mask with no pixel at ½ or more draws nothing and is refused.
 
+## GDSII files
+
+`Gds::read` reads a GDSII stream file, the format mask layouts are exchanged in, and
+`Gds::shape(cell, [layer, datatype], window)` gives what a cell draws on one of its layers as a
+shape, every cell it places flattened into it. It is read only: writing layouts, in GDSII and
+OASIS, is the layout module's, planned for 0.9. The reader is our own, in Rust, with no
+dependency beyond the booleans the geometry already uses, so the download doesn't grow.
+
+**What it reads.** A stream is a list of records, each its length, its type and its data.
+
+| Records | What they give |
+|---|---|
+| `HEADER`, `BGNLIB`, `LIBNAME` | the library; a file that doesn't start with `HEADER` isn't one |
+| `UNITS` | the database unit in metres: every coordinate is a whole number of it, read in µm |
+| `BGNSTR`, `STRNAME`, `ENDSTR` | the cells, each with its name |
+| `BOUNDARY` (`LAYER`, `DATATYPE`, `XY`) | a polygon on a (layer, datatype) pair |
+| `BOX` (`LAYER`, `BOXTYPE`, `XY`) | a polygon, its box type taken as the datatype |
+| `PATH` (`WIDTH`, `PATHTYPE`, `BGNEXTN`, `ENDEXTN`) | its outline: the two sides half the width out, mitred at the corners; its ends flush (type 0), round (1), out by half the width (2) or by the extensions (4) |
+| `SREF`, `AREF` (`SNAME`, `STRANS`, `MAG`, `ANGLE`, `COLROW`) | a cell placed once, or as columns by rows: reflected about x, magnified, turned counterclockwise, then moved |
+| `TEXT`, `NODE`, properties, the rest | nothing drawn: passed over |
+
+Numbers are GDSII's excess-64 reals, $(-1)^s \thinspace 0.f \times 16^{e - 64}$ with a 7-bit
+exponent and a 56-bit fraction, rounded once to the nearest double. A database unit of 1 nm has no
+exact form in either; the number of units in a µm that is whole to the precision both hold is
+taken as that whole number, so that 1500 units of 1 nm are 1.5 µm exactly. A quarter turn is exact
+too. A round path end is a half circle whose chords stray from it by at most half a database unit,
+as fine as the file can place a point.
+
+**Holes.** GDSII has no polygons with holes. A layer is the union of everything drawn on it, as a
+mask is written: a boundary inside another is not a hole. A hole is drawn as GDSII draws one, a
+boundary cut to it along a line it goes out and back on (a keyhole); the union finds it, and the
+piece becomes the polygon less its holes, so a distance near the cut is the true boundary's. A
+hole drawn on a layer of its own is cut out by a job's `"difference"` of the two layers.
+
+**What it refuses.** A malformed file is an error naming the byte, never a panic: one cut short
+anywhere, a record whose length or data doesn't fit, an element without its fields or its `ENDEL`,
+a cell without its name or its `ENDSTR`, two cells of one name, no `UNITS`. Flattening refuses a
+cell placed within itself (naming the chain), a cell the file doesn't have, a hierarchy deeper
+than 64 levels (`GDS_MAX_DEPTH`), and more than $10^7$ polygons on the layer (`GDS_MAX_POLYGONS`,
+as many as an array may have), counted before any is made. It refuses what it doesn't read
+rather than guess: an absolute width, magnification or angle (a negative `WIDTH`, `STRANS`'s
+absolute bits), which would ignore the placements above them, and a path that turns back on
+itself.
+
+| Check | Ours |
+|---|---|
+| Excess-64: 1, 0.5, −2.5, and 10⁻³ and 10⁻⁹ as files hold them, against their values | exact, to the bit |
+| A cell placed moved, turned a quarter, reflected and turned 30°, magnified 1.5 and as a 3 × 2 array: the layer's area, as the union and its polygons summed, against $3.82\thinspace(3 + 1.5^2 + 6)$ µm² | 8.3e-16 relative |
+| A heptagon of arbitrary integer coordinates: its area read against the shoelace formula in integers | under 1e-13 relative |
+| A keyhole's area against the square less its hole, and its distance at the cut | the hole's, 0.5 µm |
+| The case's file cut short after each of its bytes, and each byte with one of two bits flipped | each an error or read, never a panic |
+
+`geometry/gds` is the validation case: its file written byte by byte, so that every number in it
+is known.
+
 ## In jobs
 
 `[[task.shape]]` draws any of them in `"structure"`, `"fdfd"` and `"fdtd"` jobs, with an `etch`
@@ -398,7 +456,23 @@ task:
       corner: ["-1 um", "2 um"]  # the lower left corner
       pixel: ["100 nm", "100 nm"]
       rows: [[0, 1, 1], [1, 0.5, 0]]  # the top row first
+
+    - type: gds             # what a GDSII file's cell draws on one of its layers
+      layer: Si             # the stack's layer it is drawn on: its material and thickness
+      file: chip.gds        # from the job file's folder
+      gds_layer: [1, 0]     # [layer, datatype] in the file
+      cell: TOP             # optional: the file's one top cell
+      x: ["0 um", "20 um"]  # optional: a window, in the file's coordinates
+      y: ["-5 um", "5 um"]
+      origin: ["-10 um", 0] # optional: the file's origin placed here, after
+      angle: "0 deg"        #   turning by angle about it
 ```
+
+A GDSII layer becomes a stack's layer by naming it: each `"gds"` shape reads one (layer, datatype)
+pair onto one layer of the job's stack, which gives it its material, thickness and etch, so a
+file's waveguide layer and its rib layer are two shapes, the second with an `etch`. The file is
+read when the job is checked, so a missing file, an unknown cell or an empty layer are named
+before anything runs.
 
 `job::check` refuses what the library refuses, naming the table, its type and the field
 (`[[task.shape]] #2 (polar): its radius ... must be positive`), and a field another type takes.

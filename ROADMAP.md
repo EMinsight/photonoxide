@@ -315,7 +315,7 @@ A problem is set up by writing a file, not a program. Its results are taken away
   - NPZ and CSV, besides Touchstone, written in pure Rust; deflate at a chosen level, f64 or f32 (the file says when it was downcast), and the size estimated before writing, a finished run's fields written again so; zstd and HDF5 through `photonoxide-native`, loading the user's own libzstd and libhdf5 at run time. MAT and VTK XML aren't needed for now (tachsin, 2026-10-24): an issue of their own if they ever are;
   - the façade's `export` and the arrays with their grids, for Python;
   - heavy arrays in `events.bin`, NumPy arrays beside `events.jsonl` rather than in it, replay still bit for bit.
-- [ ] **Masks in:** a GDS file's layers read into a structure job, read only; writing layouts stays 0.9's. *(Moved to 0.6.1.)*
+- [x] **Masks in:** a GDS file's layers read into a structure job, read only; writing layouts stays 0.9's. *(Moved to 0.6.1. Done there (#543): `geometry::Gds`, our own reader of GDSII streams (boundaries, boxes, paths of every end type with mitred corners, references and arrays of them reflected, magnified and turned), flattened to 64 levels and 10⁷ polygons, each layer the union of what is drawn on it, keyholes as holes, a window, in µm; a `"gds"` shape in `"structure"`, `"fdfd"` and `"fdtd"` jobs, a file's (layer, datatype) onto a stack's layer, from the job file's folder. A malformed or cut-short file is an error naming the byte. Checked on a file written byte by byte (`geometry/gds`). See [geometry](docs/methods/geometry.md#gdsii-files).)*
 
 ### 0.6: Thermal and electro-optic devices
 
@@ -355,7 +355,7 @@ Second- and third-order processes in waveguides and resonators: SHG, SFG, DFG, p
   - the thin-film lithium niobate Mach–Zehnder modulator as a device, at analytic, 2D and measured fidelity (#420), with He 2019's and Valdez 2023's modulators as cases;
   - Zhang 2022's 3 dB bandwidths, 170 and 100 GHz, explained and reproduced (#418);
   - the studio's temperature and electrode-field views on the cross-section, and the Vπ·L and bandwidth sweeps (#421);
-  - masks in: a GDS file's layers read into a structure job, read only;
+  - masks in: a GDS file's layers read into a structure job, read only; *(done: `geometry::Gds` and a job's `"gds"` shape)*
   - validation tolerances by one rule (#544), in 0.6.x: every case's measure (relative, or absolute where the expected value is zero or the reference's uncertainty is absolute), its tolerance from a stated basis (round-off, the grid study, the reference's uncertainty or printed digits, the model's stated accuracy, the scheme's order), and our own numerical error shown beside it.
 - [ ] **Transparency windows** for every catalogue material, with their sources:
   - the band-gap edge, against composition for the III–V alloys (Vurgaftman 2001);
