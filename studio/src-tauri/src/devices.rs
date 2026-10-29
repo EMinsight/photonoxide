@@ -1668,6 +1668,7 @@ pub fn read_device(path: String) -> Result<Saved, String> {
 }
 
 pub mod compact;
+pub mod fields;
 pub mod optimizing;
 pub use optimizing::OptimizeIn;
 

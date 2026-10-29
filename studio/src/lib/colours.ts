@@ -45,12 +45,19 @@ export function range(r: Raster): [number, number] {
   return [lo, hi];
 }
 
+/** The value below which a share `q` (0 to 1) of a raster's values lie: its colour scale's top, past a few singular pixels. */
+export function quantile(r: Raster, q: number): number {
+  const sorted = Float64Array.from(r.values).sort();
+  return sorted.length ? sorted[Math.min(sorted.length - 1, Math.max(0, Math.round(q * (sorted.length - 1))))] : 0;
+}
+
 /**
- * A raster as RGBA pixels coloured by `colour` from its smallest value to its largest, rows
- * from the raster's first (y0) up when `topFirst` is false, from its last down when true.
+ * A raster as RGBA pixels coloured by `colour` from its smallest value to its largest (or over
+ * `scale`, the values beyond it at its ends), rows from the raster's first (y0) up when
+ * `topFirst` is false, from its last down when true.
  */
-export function pixels(r: Raster, colour: (t: number) => Rgb, topFirst: boolean): Uint8ClampedArray<ArrayBuffer> {
-  const [lo, hi] = range(r);
+export function pixels(r: Raster, colour: (t: number) => Rgb, topFirst: boolean, scale?: [number, number]): Uint8ClampedArray<ArrayBuffer> {
+  const [lo, hi] = scale ?? range(r);
   const span = Math.max(hi - lo, 1e-30);
   const out = new Uint8ClampedArray(new ArrayBuffer(r.nx * r.ny * 4));
   for (let row = 0; row < r.ny; row++) {

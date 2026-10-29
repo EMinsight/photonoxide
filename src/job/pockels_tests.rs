@@ -136,6 +136,61 @@ fn a_job_checks_vpi_l_on_coarser_grids() {
 }
 
 #[test]
+fn a_job_records_the_electrodes_field_and_the_mode_on_one_window() {
+    let text = WANG.replace("step_nm = 20.0\n", "step_nm = 40.0\nresolve = false\n");
+    let ev = run_job("pictures", &text);
+    let fields: Vec<(&str, &str, &crate::raster::Raster)> = ev
+        .iter()
+        .filter_map(|e| match e {
+            Event::StaticField {
+                label,
+                unit,
+                raster,
+                ..
+            } => Some((label.as_str(), unit.as_str(), raster)),
+            _ => None,
+        })
+        .collect();
+    let labels: Vec<&str> = fields.iter().map(|f| f.0).collect();
+    assert_eq!(
+        labels,
+        ["potential", "electric field |E|", "mode's |E|^2"],
+        "{labels:?}"
+    );
+    let (e, mode) = (fields[1].2, fields[2].2);
+    assert_eq!((fields[1].1, fields[2].1), ("V/m", "relative"));
+    // the mode's window, on the same pixels: 6 × 3.5 µm at the mode's 40 nm
+    for r in [e, mode] {
+        assert_eq!((r.nx, r.ny), (150, 88));
+        assert_eq!([r.x0, r.x1, r.y0, r.y1], [-3.0, 3.0, 0.5, 4.0]);
+    }
+    let centre = |r: &crate::raster::Raster, k: usize| {
+        let (i, j) = (k % r.nx, k / r.nx);
+        [
+            r.x0 + (i as f64 + 0.5) * (r.x1 - r.x0) / r.nx as f64,
+            r.y0 + (j as f64 + 0.5) * (r.y1 - r.y0) / r.ny as f64,
+        ]
+    };
+    // the mode's peak, 1, in the rib (900 nm wide, the film from 2.0 to 2.7 µm up)
+    let (k, peak) = mode
+        .values
+        .iter()
+        .enumerate()
+        .fold((0, f32::MIN), |b, (k, &v)| if v > b.1 { (k, v) } else { b });
+    let [y, z] = centre(mode, k);
+    assert!((peak - 1.0).abs() < 1e-6, "{peak}");
+    assert!(y.abs() < 0.45 && (2.0..2.7).contains(&z), "{y} {z}");
+    // in the film under the mode's peak the field is of the order of 1 V over the 3.5 µm gap,
+    // smaller in the crystal for its high permittivity: between a tenth of it and all of it
+    let field = f64::from(e.values[k]);
+    assert!(
+        (1.0 / 3.5e-6 * 0.1..1.0 / 3.5e-6).contains(&field),
+        "{field} V/m"
+    );
+    assert!(e.values.iter().all(|v| v.is_finite() && *v >= 0.0));
+}
+
+#[test]
 fn what_the_electro_optic_table_refuses() {
     for (from, to, says) in [
         (

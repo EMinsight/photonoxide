@@ -11,10 +11,14 @@
 //! `complete_from` for what it leaves unknown) into the guide's frame by the crystal's
 //! orientation, and records dn_eff/dV by first-order perturbation, by the perturbed
 //! cross-section solved again (`resolve`, true by default), and Vπ·L, per volt of the
-//! conductors' span (the highest potential less the lowest). `drive` is `"push-pull"` (a
-//! Mach–Zehnder's two arms, the default) or `"single-arm"`. A medium `[task.permittivity]`
-//! doesn't name takes nothing, except the crystal: by default its clamped static permittivity
-//! from the catalogue (ε^S, `static_permittivity: unclamped` for ε^T), turned the same way.
+//! conductors' span (the highest potential less the lowest). It records two more
+//! [`Event::StaticField`]s on the mode's window, on the same pixels (at most 400 across or up):
+//! the electrodes' field `"electric field |E|"` (V/m, at the conductors' potentials) and the
+//! mode's `"mode's |E|^2"` (1 at its peak), so a view can draw where they overlap. `drive` is
+//! `"push-pull"` (a Mach–Zehnder's two arms, the default) or `"single-arm"`. A medium
+//! `[task.permittivity]` doesn't name takes nothing, except the crystal: by default its clamped
+//! static permittivity from the catalogue (ε^S, `static_permittivity: unclamped` for ε^T),
+//! turned the same way.
 //!
 //! `convergence: { tolerance: 0.01 }` (V·cm) checks Vπ·L on the static and the optical grids
 //! made twice and four times as coarse together (`grids: 2` for one coarser), as a modes job's
@@ -267,6 +271,45 @@ pub(super) struct Modulation {
     pub vpi_l_cm: f64,
     pub cells: [usize; 2],
     pub step_um: f64,
+    /// The electrodes' field |E| (V/m, at the conductors' potentials) and the mode's |E|² (1 at
+    /// its peak) on the mode's window, on the same pixels: where they overlap is what moves the
+    /// index.
+    pub pictures: [crate::raster::Raster; 2],
+}
+
+/// The most pixels across or up a picture of the mode's window has.
+const PICTURE_PIXELS: f64 = 400.0;
+
+/// The electrostatic field's magnitude |E| (V/m) over `y` × `z` (µm), `step` per pixel: each
+/// pixel [`crate::electro::ElectricField::at`] its centre (zero inside a conductor).
+fn strength(
+    field: &crate::electro::ElectricField,
+    y: [f64; 2],
+    z: [f64; 2],
+    step: f64,
+) -> crate::raster::Raster {
+    let (nx, ny) = (
+        ((y[1] - y[0]) / step).round().max(1.0) as usize,
+        ((z[1] - z[0]) / step).round().max(1.0) as usize,
+    );
+    let mut values = Vec::with_capacity(nx * ny);
+    for j in 0..ny {
+        let zv = z[0] + (j as f64 + 0.5) * (z[1] - z[0]) / ny as f64;
+        for i in 0..nx {
+            let yv = y[0] + (i as f64 + 0.5) * (y[1] - y[0]) / nx as f64;
+            let e = field.at(yv, zv);
+            values.push(e[0].hypot(e[1]) as f32);
+        }
+    }
+    crate::raster::Raster {
+        nx,
+        ny,
+        x0: y[0],
+        x1: y[1],
+        y0: z[0],
+        y1: z[1],
+        values,
+    }
 }
 
 /// The chain on `problem` (its grid as the run's, or coarser) and the mode's step `step_um`:
@@ -373,6 +416,12 @@ pub(super) fn modulation(
     };
     let per_volt = first / span;
     let vpi_l_cm = 100.0 * half_wave_voltage_length(per_volt, lam, spec.drive()?)?;
+    let (y, z) = (spec.y_um, spec.z_um);
+    let pixel = step_um.max((y[1] - y[0]).max(z[1] - z[0]) / PICTURE_PIXELS);
+    let pictures = [
+        strength(&field, y, z, pixel),
+        super::intensity(&mode.fields(&cs)?, &cs, y, z, pixel),
+    ];
     Ok(Some(Modulation {
         n_eff: mode.effective_index().re,
         te_fraction: mode.te_fraction(),
@@ -381,6 +430,7 @@ pub(super) fn modulation(
         vpi_l_cm,
         cells: [xs.len() - 1, ys.len() - 1],
         step_um,
+        pictures,
     }))
 }
 
@@ -398,6 +448,19 @@ pub(super) fn run(
     let Some(m) = modulation(chain, problem, step, spec.resolve.unwrap_or(true), stop)? else {
         return Ok(None);
     };
+    // the electrodes' field and the mode on the mode's window: the studio's electrode-field view
+    let [field, mode] = &m.pictures;
+    for (label, unit, raster) in [
+        ("electric field |E|", "V/m", field),
+        ("mode's |E|^2", "relative", mode),
+    ] {
+        run.record(&Event::StaticField {
+            label: label.into(),
+            unit: unit.into(),
+            axes: ["y".to_owned(), "z".to_owned()],
+            raster: raster.clone(),
+        })?;
+    }
     let value = |name: &str, value: f64, unit: &str| super::statics::StaticValue {
         name: name.to_owned(),
         value,
