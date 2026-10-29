@@ -1797,6 +1797,11 @@ fn bto_constant(
     }
 }
 
+/// Tian et al.'s films: how they were made and measured.
+const TIAN_CONDITIONS: &str = "1550 nm, room temperature; an epitaxial film about 200 to 300 nm thick on 23 nm of SrTiO₃ on Si(001), grown by pulsed laser deposition or hybrid molecular beam epitaxy (two flux ratios), its index by spectroscopic ellipsometry (HORIBA Uvisel Plus, 350 to 2100 nm, fitted from 400 to 2000 nm with one isotropic layer, a Drude model); read off the figure, which prints no numbers (a pixel is 0.001); a preprint";
+/// Where in Tian et al.
+const TIAN_LOCATION: &str = "Fig. 4(a), read off the figure; Section 2 (the ellipsometry)";
+
 fn barium_titanate() -> Entry {
     let abel = Tensor {
         kind: TensorKind::ElectroOptic,
@@ -1862,7 +1867,10 @@ fn barium_titanate() -> Entry {
             centrosymmetric: false,
             notes: "tetragonal between about 5 °C and its Curie temperature near 120 °C in bulk (200 °C in Deng et al.'s films); films hold domains with c along each in-plane axis, so measured coefficients are domain averages".into(),
         },
-        index: vec![super::ferroelectric::batio3_model()],
+        index: vec![
+            super::ferroelectric::batio3_model(),
+            super::batio3_film::suceava_model(),
+        ],
         tensors: vec![abel, deng, chelladurai],
         constants: vec![
             bto_constant(
@@ -1882,6 +1890,33 @@ fn barium_titanate() -> Entry {
                 "",
                 "1550 nm",
                 src("eltes-2019", "Section IV, after Eq. (1)"),
+            ),
+            bto_constant(
+                "n",
+                "the film's optical index at 1550 nm, by ellipsometry: PLD",
+                super::batio3_film::TIAN_1550[0].1,
+                None,
+                "",
+                TIAN_CONDITIONS,
+                src("tian-2026", TIAN_LOCATION),
+            ),
+            bto_constant(
+                "n",
+                "the film's optical index at 1550 nm, by ellipsometry: hybrid MBE (hMBE_1)",
+                super::batio3_film::TIAN_1550[1].1,
+                None,
+                "",
+                TIAN_CONDITIONS,
+                src("tian-2026", TIAN_LOCATION),
+            ),
+            bto_constant(
+                "n",
+                "the film's optical index at 1550 nm, by ellipsometry: hybrid MBE (hMBE_2)",
+                super::batio3_film::TIAN_1550[2].1,
+                None,
+                "",
+                TIAN_CONDITIONS,
+                src("tian-2026", TIAN_LOCATION),
             ),
             bto_constant(
                 r"\tfrac12(r_{13} + 2r_{42})",
@@ -1912,7 +1947,14 @@ fn barium_titanate() -> Entry {
             ),
         ],
         missing: coming::missing("batio3"),
-        references: references(&["abel-2018", "chelladurai-2025", "deng-2026", "eltes-2019"]),
+        references: references(&[
+            "abel-2018",
+            "chelladurai-2025",
+            "deng-2026",
+            "eltes-2019",
+            "suceava-2025",
+            "tian-2026",
+        ]),
     }
 }
 

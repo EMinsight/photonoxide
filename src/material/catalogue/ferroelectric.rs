@@ -328,7 +328,7 @@ pub(super) fn batio3_model() -> IndexModel {
         dndt: None,
         sources: vec![src("abel-2018", "Supplementary Note 6, Eq. (4)")],
         default: true,
-        notes: "a constant index at 1550 nm, taken flat over 1.50 to 1.60 µm: no film's dispersion is tabulated in the papers read. The axes are a single domain's; a film of in-plane a-axis domains (Abel et al.'s) averages them in the plane. The films' index varies with growth and stoichiometry".into(),
+        notes: "a constant index at 1550 nm, taken flat over 1.50 to 1.60 µm. Suceava et al. 2025's model gives a dispersion, but of a strained film on GdScO₃ and its ordinary index only (the model suceava-2025). The axes are a single domain's; a film of in-plane a-axis domains (Abel et al.'s) averages them in the plane. The films' index varies with growth and stoichiometry".into(),
         eval: |_, _| batio3_abel(),
     }
 }

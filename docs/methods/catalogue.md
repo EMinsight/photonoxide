@@ -26,6 +26,10 @@ papers:
     doi: 10.1007/s003400200818
   - cite: "D. Chelladurai et al., Nat. Mater. 24, 868 (2025)"
     doi: 10.1038/s41563-025-02158-1
+  - cite: "A. Suceava et al., Adv. Mater. 38, e07564 (2025)"
+    doi: 10.1002/adma.202507564
+  - cite: "X. Tian et al., arXiv:2604.23259 (2026)"
+    doi: 10.48550/arXiv.2604.23259
   - cite: "I. Shoji, T. Kondo, A. Kitamoto, M. Shirane, R. Ito, J. Opt. Soc. Am. B 14, 2268 (1997)"
     doi: 10.1364/JOSAB.14.002268
   - cite: "D. A. Roberts, IEEE J. Quantum Electron. 28, 2057 (1992)"
@@ -387,6 +391,7 @@ every value a tensor gives is an element its tag names.
 | LiTaO₃ | Bond 1965 (our fit, default) | two-term Sellmeier for $n_o$ and $n_e$, fitted to Bond's Table IV (refractiveindex.info, CC0, checked against the paper) | 0.45–4.0 µm, room temperature, within 6.7e-4 of the table |
 | LiTaO₃ | Abedin & Ito 1996 | $n_{o,e}(\lambda, T)$, Eq. (1), Tables I and II | 0.4–4.0 µm, 25–300 °C (the temperature terms fitted at 468 and 644 nm) |
 | BaTiO₃ (thin film) | Abel et al. 2018, at 1550 nm | constant $n_o = ar n + \Delta n/2$, $n_e = ar n - \Delta n/2$; $ar n$ = 2.286, $\Delta n$ = 0.03 (Supplementary Note 6) | 1.50–1.60 µm |
+| BaTiO₃ (strained film on GdScO₃) | Suceava et al. 2025 | $n_o$ only: four Gaussian oscillators and two poles, Supporting Note S3, Table S1 (our evaluation, every 10 nm) | 0.5–1.6893 µm, room temperature |
 
 Two models are new forms in `Model`: `Model::Pikhtin` (Skauli's Eq. (12), photon energies in eV)
 and `Model::Afromowitz`. Gehrsitz's oscillators $C/(E_i^2 - E^2)$, with $E = 1/\lambda$ in
@@ -491,6 +496,27 @@ congruent Table 1 is printed the right way round.
   1550 nm only, 2.28 to 2.33 for their stoichiometric films). The other films' indices at 1550 nm
   stay as constants (2.26, Chelladurai et al.; 2.29, Eltes et al.): the films' spread, within
   0.026 of Abel et al.'s. 4mm's pattern is 6mm's ($r_{13} = r_{23}$, $r_{33}$, $r_{42} = r_{51}$).
+
+  **A film's dispersion.** A. Suceava et al. (Adv. Mater. 38, e07564 (2025)) measured a 36.53 nm
+  film strained on (110) GdScO₃ by variable-angle spectroscopic ellipsometry (45°, 55° and 65°,
+  271 to 1689 nm) and print their model of its ordinary index (Supporting Note S3, Table S1): four
+  Gaussian oscillators with an infrared and an ultraviolet pole, the model their analysis uses, and
+  four Lorentz oscillators fitted to the same data. The catalogue's model `suceava-2025` is the
+  Gaussian one's $n_o$ from 0.5 µm, where the absorption edge has passed, to 1.6893 µm: 2.317 at
+  1550 nm, where the Lorentz model gives 2.3174. It takes $n$ only: the two models' $k$ at 1550 nm,
+  0.061 and 0.120, differ twofold where their $n$ agree within 2e-4, so the data don't fix it there.
+  The extraordinary index, their ordinary plus an extended-Cauchy difference whose form the paper
+  leaves to the analysis software's manual, isn't reproduced. The check: the catalogue's index,
+  36.53 nm on their GdScO₃ (their Cauchy model), reflects 0.1240 at normal incidence against the
+  0.124 they measured at 4° with the substrate's back reflection cut off
+  (`material/batio3-suceava-reflectance`, within half its last digit; that is ±0.01 in $n$). With
+  the models' $k$ we get 0.1294 and 0.1345, where the paper computes 0.1237 and 0.1292 from its
+  anisotropic model: we don't reproduce those. X. Tian et al. (arXiv:2604.23259 (2026)) grew
+  200–300 nm films on SrTiO₃-buffered silicon by pulsed laser deposition and hybrid MBE and show
+  their index from 400 to 2000 nm (one isotropic layer fitted per film) only as a figure, Fig.
+  4(a); read off it, 2.281 (PLD), 2.262 and 2.309 (hMBE) at 1550 nm, kept as constants. The
+  films' indices at 1550 nm thus run from 2.26 to 2.317 across the papers: Suceava et al.'s strained
+  film the highest, 0.016 above Abel et al.'s $n_o$.
 - **Lithium tantalate:** Casson et al. 2004's unclamped $r_{13}$ and $r_{33}$ at 632.8, 980, 1330
   and 1558 nm (Table 2; 6.92 ± 0.07 and 27.4 ± 0.3 pm/V at 1558 nm), from the deflection per volt
   of a domain-patterned crystal scaled from the literature's 632.8 nm values, with the indices they

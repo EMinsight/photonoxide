@@ -632,6 +632,16 @@ pub(crate) fn rules() -> Vec<(&'static str, Rule)> {
                 "the films' spread across the three papers",
             ),
         ),
+        (
+            "material/batio3-suceava-reflectance",
+            Rule::new(
+                Absolute,
+                Reference,
+                5e-4,
+                Exact,
+                "the measured reflectance's three decimals: half a unit of the last",
+            ),
+        ),
         // ---- the III-Vs and aluminium nitride ----
         (
             "material/gaas-gehrsitz-gap",

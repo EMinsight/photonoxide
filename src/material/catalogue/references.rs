@@ -425,6 +425,20 @@ const PAPERS: &[(&str, &str, &str, &str, &str)] = &[
         "",
     ),
     (
+        "suceava-2025",
+        "A. Suceava, S. Hazra, A. Ross, I. R. Philippi, D. Sotir, B. Brower, L. Ding, Y. Zhu, Z. Zhang, H. Sarkar, S. Sarker, Y. Yang, S. Sarker, V. A. Stoica, D. G. Schlom, L.-Q. Chen, V. Gopalan, Adv. Mater. 38, e07564 (2025)",
+        "Colossal cryogenic electro-optic response through metastability in strained BaTiO3 thin films",
+        "10.1002/adma.202507564",
+        "https://arxiv.org/abs/2510.13256",
+    ),
+    (
+        "tian-2026",
+        "X. Tian, Y. Lin, H. Gao, H. Yu, Y. Ma, R. Liang, C. Chen, W. Li, C. Deng, Q. Zheng, Q. Li, arXiv:2604.23259 (2026)",
+        "Wafer-scale hybrid molecular beam epitaxy of BaTiO3 and SrTiO3 on silicon",
+        "10.48550/arXiv.2604.23259",
+        "https://arxiv.org/abs/2604.23259",
+    ),
+    (
         "eltes-2019",
         "F. Eltes, C. Mai, D. Caimi, M. Kroh, Y. Popoff, G. Winzer, D. Petousi, S. Lischke, J. Ortmann, L. Czornomaz, L. Zimmermann, J. Fompeyrine, S. Abel, J. Lightwave Technol. 37, 1456 (2019)",
         "A BaTiO3-based electro-optic Pockels modulator monolithically integrated on an advanced silicon photonics platform",

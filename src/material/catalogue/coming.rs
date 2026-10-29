@@ -151,12 +151,12 @@ const ITEMS: &[Item] = &[
     },
     Item {
         entry: "batio3",
-        property: "n(λ), the film's dispersion",
+        property: "n_e(λ), and a film on silicon's dispersion",
         source: "",
         citation: "",
         doi: "",
         open: false,
-        detail: r"Shipped: Abel et al.'s film at 1550 nm (their Supplementary Note 6: the mean index 2.286 by ellipsometry, the birefringence 0.03 extrapolated from the bulk crystal's), constant from 1.50 to 1.60 µm; beside it 2.26 (Chelladurai et al. 2025) and 2.29 (Eltes et al. 2019), as constants. In hand: no film's dispersion is tabulated in the papers read (Abel et al. fit a Cauchy model without printing it; Fazlioglu-Yalcin et al., Adv. Mater. Interfaces 10, 2300018 (2023), give a film's index at 632 and 1550 nm only).",
+        detail: r"Shipped: Abel et al.'s film at 1550 nm (their Supplementary Note 6: the mean index 2.286 by ellipsometry, the birefringence 0.03 extrapolated from the bulk crystal's), constant from 1.50 to 1.60 µm, the default; Suceava et al. 2025's ordinary index of a 36.53 nm strained film on GdScO₃ from 0.5 to 1.69 µm, their Gaussian-oscillator model (Supporting Note S3, Table S1); and as constants at 1550 nm 2.26 (Chelladurai et al. 2025), 2.29 (Eltes et al. 2019) and Tian et al. 2026's three films on silicon, 2.262 to 2.309 (Fig. 4(a), read off the figure). In hand: Suceava et al.'s extraordinary index is the ordinary plus an extended-Cauchy difference whose form the paper leaves to the analysis software's manual, so it isn't reproduced; Tian et al. print their films' dispersion as a figure only (an isotropic fit, 400 to 2000 nm); Fazlioglu-Yalcin et al., Adv. Mater. Interfaces 10, 2300018 (2023), give a film's index at 632 and 1550 nm only.",
     },
     Item {
         entry: "batio3",
