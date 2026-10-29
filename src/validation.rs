@@ -215,6 +215,7 @@ pub fn rules() -> Vec<(&'static str, Rule)> {
     rules.extend(materials::rules());
     rules.extend(modes::rules());
     rules.extend(fdfd::rules());
+    rules.extend(fdtd::rules());
     rules.extend(geometry::rules());
     rules
 }
@@ -1776,16 +1777,16 @@ pub fn cases() -> Vec<Case> {
         },
         Case {
             id: "fdtd/smoothing-contrast",
-            title: r"FDTD's smoothed tensor at high contrast: a closed box ($20 \times 18 \times 16$ cells of 50 nm) holding an isotropic ellipsoid at an angle to the grid in vacuum, the off-diagonal entries at the nodes, random D and H at Courant number 0.99: at $\varepsilon = 40$ the largest $\lVert E\rVert$ over $10^5$ steps relative to the first (shown); refused at $\varepsilon = 50$, its $\tilde\varepsilon^{-1}$ on the grid not positive definite",
+            title: r"FDTD's smoothed tensor at high contrast: a closed box ($20 \times 18 \times 16$ cells of 50 nm) holding an isotropic ellipsoid at an angle to the grid in vacuum, the off-diagonal entries at the nodes, random D and H at Courant number 0.99: at $\varepsilon = 40$ the largest change of $\tfrac12\sum E\cdot D + \tfrac12\sum \tilde H^{n-1/2}\cdot\tilde H^{n+1/2}$ over $10^5$ steps relative to it (shown), and $\lVert E\rVert$ bounded; refused at $\varepsilon = 50$, its $\tilde\varepsilon^{-1}$ on the grid not positive definite",
             tier: Tier::Analytic,
-            source: r"symmetric, the leapfrog's energy is conserved, but it bounds the fields only while $\tilde\varepsilon^{-1}$ is positive definite, and Werner and Cary's 2007 scheme isn't at every contrast: here its least eigenvalue turns negative between $\varepsilon = 40$ and 45 ($-4.6 \times 10^{-3}$ at 50), and $\varepsilon = 50$ let through grows by $10^{149}$ in $10^4$ steps. The check is exact (a Cholesky factorization of the coupled block) but sufficient, not sharp: 45 let through stays bounded over $10^5$ steps",
+            source: r"symmetric, the leapfrog's energy is conserved, but it bounds the fields only while $\tilde\varepsilon^{-1}$ is positive definite, and Werner and Cary's 2007 scheme isn't at every contrast: here its least eigenvalue turns negative between $\varepsilon = 40$ and 45 ($-4.6 \times 10^{-3}$ at 50), and $\varepsilon = 50$ let through grows by $10^{149}$ in $10^4$ steps. The check is exact (a Cholesky factorization of the coupled block) but sufficient, not sharp: 45 let through stays bounded over $10^5$ steps. Measured at 40: the energy to 7.6e-15, and $\lVert E\rVert$ never above its first",
             run: fdtd_smoothing_contrast,
         },
         Case {
             id: "fdtd/smoothing-oskooi",
             title: r"FDTD's subpixel smoothing of anisotropic media, Oskooi et al.'s 2D lattice: ellipses (semi-axes 0.355 and 0.305 of the period, as their inset) of principal values 1.45, 2.81 and 4.98 in 8.49, 8.78 and 11.52, the axes ours; the lowest mode at $k = (\tfrac12, 0)\thinspace 2\pi/a$ on 32 cells a period: the error of $\tau$'s average relative to the smaller of the harmonic mean's and no smoothing's (shown)",
             tier: Tier::Published,
-            source: r"A. F. Oskooi, C. Kottke, S. G. Johnson, Opt. Lett. 34, 2778 (2009), doi:10.1364/OL.34.002778, Fig. 2: the new smoothing has the lowest error, often by an order of magnitude. Against the mean of $s = 1$ and $s = 2$ at 64 cells (which converge from either side), 0.159381 c/µm: 2.3e-4 smoothed, 4.5e-3 harmonic mean, 3.7e-3 none; but 2.5e-4 for the mean $\langle\varepsilon\rangle$, which their figure has 6 times the new one's (not reproduced here: at this $k$ and with our axes the mean is as good)",
+            source: r"A. F. Oskooi, C. Kottke, S. G. Johnson, Opt. Lett. 34, 2778 (2009), doi:10.1364/OL.34.002778, Fig. 2: the new smoothing has the lowest error, often by an order of magnitude. Against the mean of $s = 1$ and $s = 2$ at 64 cells (which converge from either side, 2.6e-5 c/µm apart), 0.159381 c/µm: 2.3e-4 smoothed, 4.5e-3 harmonic mean, 3.7e-3 none; but 2.5e-4 for the mean $\langle\varepsilon\rangle$, which their figure has 6 times the new one's (not reproduced here: at this $k$ and with our axes the mean is as good)",
             run: fdtd_smoothing_oskooi,
         },
         Case {
@@ -1841,7 +1842,7 @@ pub fn cases() -> Vec<Case> {
             id: "fdtd/smoothing-wc07-growth",
             title: r"Werner and Cary's 2007 scheme (`Coupling::Nodes`, let through unchecked) unstable at high contrast: a square lattice of isotropic discs of $\varepsilon = 100$, radius $0.37a$, in vacuum, TE, 32 cells a period, from random fields: the rate $\gamma$ at which $\lVert E\rVert$ grows as $e^{\gamma t}$, c/a (shown); 64 cells too, and `Coupling::Triplets` bounded at both",
             tier: Tier::Published,
-            source: r"G. R. Werner, C. A. Bauer, J. R. Cary, J. Comput. Phys. 255, 436 (2013), doi:10.1016/j.jcp.2013.08.009, Sec. 5: at contrast 100, $\gamma \approx 3c/a$ on $32^2$ cells and $\approx 6c/a$ on $64^2$; measured 2.85 and 6.11. Their contrast-60 case ($\gamma \approx 0.5c/a$ on $64^2$) isn't reproduced: no growth here over $3000a/c$ (the disc's place on the grid isn't given). The triplets stay within 1.1 times the first $\lVert E\rVert$",
+            source: r"G. R. Werner, C. A. Bauer, J. R. Cary, J. Comput. Phys. 255, 436 (2013), doi:10.1016/j.jcp.2013.08.009, Sec. 5: at contrast 100, $\gamma \approx 3c/a$ on $32^2$ cells and $\approx 6c/a$ on $64^2$; measured 2.85 and 6.11, the slopes over the growth's two halves within 3.4e-3 of each other. Their contrast-60 case ($\gamma \approx 0.5c/a$ on $64^2$) isn't reproduced: no growth here over $3000a/c$ (the disc's place on the grid isn't given). The triplets stay within 1.1 times the first $\lVert E\rVert$",
             run: fdtd_smoothing_wc07_growth,
         },
         Case {
@@ -2030,14 +2031,14 @@ pub fn cases() -> Vec<Case> {
             id: "fdtd/adjoint-modes",
             title: r"FDTD adjoint gradients in 3D: a strip guide (core $\varepsilon = 6$, $0.3 \times 0.3$ µm, in vacuum; $36 \times 20 \times 20$ cells of 50 nm, CPMLs of 6) with a design of $3 \times 2 \times 2$ cells in its core at uneven densities ($\varepsilon$ 1 to 6), its mode launched by a pulse; $F = \lvert a_+(f_0)\rvert^2 + \lvert a_+(f_1)\rvert^2 - \frac12\lvert a_-(f_0)\rvert^2$ at 1 and 1.06 c/µm: the gradient with respect to every cell's density against fourth-order central differences ($\delta = 10^{-3}$) (largest difference relative to the largest gradient shown)",
             tier: Tier::Analytic,
-            source: r"the run's transforms solve $K x = b$ exactly; $K^T D = D K$, $D$ the CPMLs' stretches, so the adjoint is a run; $\partial F/\partial\varepsilon = \sum 2\operatorname{Re}(i\tilde\omega\thinspace\hat E_\text{adj}\hat E)$ (G. Veronis, R. W. Dutton, S. Fan, Opt. Lett. 29, 2288 (2004), doi:10.1364/OL.29.002288; C. M. Lalau-Keraly et al., Opt. Express 21, 21693 (2013), doi:10.1364/OE.21.021693, Eq. 5); the mode's complex profile whole (dropped, the gradient is wrong by orders of magnitude); measured 5.5e-10, and 0.49 with the imaginary parts dropped",
+            source: r"the run's transforms solve $K x = b$ exactly; $K^T D = D K$, $D$ the CPMLs' stretches, so the adjoint is a run; $\partial F/\partial\varepsilon = \sum 2\operatorname{Re}(i\tilde\omega\thinspace\hat E_\text{adj}\hat E)$ (G. Veronis, R. W. Dutton, S. Fan, Opt. Lett. 29, 2288 (2004), doi:10.1364/OL.29.002288; C. M. Lalau-Keraly et al., Opt. Express 21, 21693 (2013), doi:10.1364/OE.21.021693, Eq. 5); the mode's complex profile whole (dropped, the gradient is wrong by orders of magnitude); measured below the differences' resolution of 1.5e-8 (the transforms settled to 1e-11, weighed by (8 + 8 + 1 + 1)/12 over $\delta$), shown as it; 0.49 with the imaginary parts dropped",
             run: fdtd_adjoint_modes,
         },
         Case {
             id: "fdtd/adjoint-flux",
             title: r"The same strip with the flux through a plane ahead (its window reaching into the CPMLs) at 1 c/µm plus $\lvert E_y\rvert^2$ at a point ahead at 1.06 c/µm (shown)",
             tier: Tier::Analytic,
-            source: r"as above; the flux $\frac12\operatorname{Re}(E \times \tilde H^*)$ gives sources of both $J$ and $M$; measured 1.5e-9",
+            source: r"as above; the flux $\frac12\operatorname{Re}(E \times \tilde H^*)$ gives sources of both $J$ and $M$; measured below the differences' resolution of 1.5e-8, shown as it",
             run: fdtd_adjoint_flux,
         },
         Case {
@@ -3389,16 +3390,23 @@ fn fdtd_slab_resonance() -> Outcome {
 }
 
 fn fdtd_smoothing_contrast() -> Outcome {
-    use crate::fdtd::smoothing::checks::contrast_growth;
+    use crate::fdtd::Coupling;
+    use crate::fdtd::smoothing::checks::{contrast_drift, contrast_growth};
     let refused = contrast_growth(50.0, 0, true).is_none();
-    let measured = contrast_growth(40.0, 100_000, true).unwrap_or(f64::INFINITY);
+    let (drift, grown) = rayon::join(
+        || contrast_drift(Coupling::Nodes, 40.0, 100_000),
+        || contrast_growth(40.0, 100_000, true),
+    );
+    // conserved and positive definite, the energy bounds the fields: E and H trade it, and ‖E‖
+    // may rise above its first value, but not grow
+    let bounded = grown.is_some_and(|g| g < 2.0);
     Outcome {
-        measured,
-        expected: 1.0,
-        // bounded: E and H trade energy, and ‖E‖ may rise above its first value
-        tolerance: 1.0,
-        error: if refused {
-            (measured - 1.0).abs()
+        measured: drift,
+        expected: 0.0,
+        // round-off over 10⁵ steps
+        tolerance: 1e-12,
+        error: if refused && bounded {
+            drift
         } else {
             f64::INFINITY
         },
@@ -3423,8 +3431,19 @@ fn fdtd_smoothing_oskooi() -> Outcome {
     ];
     let f: Vec<f64> = runs.par_iter().map(|&(s, n)| oskooi(s, n)).collect();
     let reference = 0.5 * (f[0] + f[1]);
-    let error = |v: f64| ((v - reference) / reference).abs();
-    let measured = error(f[2]) / error(f[3]).min(error(f[4]));
+    let ratio = |reference: f64| {
+        let error = |v: f64| ((v - reference) / reference).abs();
+        error(f[2]) / error(f[3]).min(error(f[4]))
+    };
+    let measured = ratio(reference);
+    // the two at 64 cells converge from either side: the exact frequency lies within half their
+    // spread of the reference, and the ratio within what that moves it by
+    let spread = 0.5 * (f[0] - f[1]).abs();
+    note_numerical(
+        (ratio(reference - spread) - measured)
+            .abs()
+            .max((ratio(reference + spread) - measured).abs()),
+    );
     Outcome {
         measured,
         expected: 0.0,
@@ -3551,20 +3570,27 @@ fn fdtd_smoothing_wc07_growth() -> Outcome {
         (Coupling::Triplets, 32),
         (Coupling::Triplets, 64),
     ];
-    let found: Vec<(f64, Option<f64>)> = runs
+    let found: Vec<(f64, Option<(f64, f64)>)> = runs
         .par_iter()
         .map(|&(coupling, n)| disc_growth(coupling, 100.0, n, 300.0))
         .collect();
-    let rate = |q: usize| found[q].1.unwrap_or(0.0);
+    let rate = |q: usize| found[q].1.map_or(0.0, |r| r.0);
     let measured = rate(0);
-    // the paper's "≈ 3" and "≈ 6", to a fifth; the triplets bounded
-    let fine = (rate(1) - 6.0).abs() < 1.2;
+    // the fit's own error: its slopes over the growth's two halves, at either grid
+    note_numerical(
+        [0, 1]
+            .iter()
+            .map(|&q| found[q].1.map_or(f64::INFINITY, |r| r.1))
+            .fold(0.0, f64::max),
+    );
+    // the paper's "≈ 3" and "≈ 6", one digit each: half a unit; the triplets bounded
+    let fine = (rate(1) - 6.0).abs() <= 0.5;
     let bounded = found[2].0 < 2.0 && found[3].0 < 2.0;
     Outcome {
         measured,
         expected: 3.0,
         // measured 2.85 (32 cells) and 6.11 (64)
-        tolerance: 0.6,
+        tolerance: 0.5,
         error: if fine && bounded {
             (measured - 3.0).abs()
         } else {
@@ -5362,6 +5388,7 @@ fn um(value: f64) -> Wavelength {
 }
 
 mod fdfd;
+mod fdtd;
 mod geometry;
 #[cfg(feature = "gpu")]
 mod gpu;
@@ -5673,27 +5700,33 @@ fn fdfd3d_adjoint_gradient() -> Outcome {
     }
 }
 
-fn fdtd_adjoint_modes() -> Outcome {
-    use crate::fdtd::adjoint_checks::{Objective, strip_against_differences};
-    let (measured, _) = strip_against_differences(Objective::Modes);
+/// The strip's adjoint gradient of `objective` against its finite differences: their largest
+/// difference, relative to the largest gradient, and no less than what the differences resolve
+/// (below it the digits are each platform's arithmetic, so it is shown as that resolution).
+fn fdtd_adjoint_against_differences(objective: crate::fdtd::adjoint_checks::Objective) -> Outcome {
+    use crate::fdtd::adjoint_checks::{DIFFERENCES_RESOLVE, strip_against_differences};
+    let (difference, _) = strip_against_differences(objective);
+    // a NaN stays one, and fails
+    let measured = if difference.is_nan() {
+        difference
+    } else {
+        difference.max(DIFFERENCES_RESOLVE)
+    };
     Outcome {
         measured,
         expected: 0.0,
-        // the differences' round-off and the transforms' settling, 1e-13 a block
+        // the differences' error, the transforms' settling over δ
         tolerance: 1e-7,
         error: measured,
     }
 }
 
+fn fdtd_adjoint_modes() -> Outcome {
+    fdtd_adjoint_against_differences(crate::fdtd::adjoint_checks::Objective::Modes)
+}
+
 fn fdtd_adjoint_flux() -> Outcome {
-    use crate::fdtd::adjoint_checks::{Objective, strip_against_differences};
-    let (measured, _) = strip_against_differences(Objective::Flux);
-    Outcome {
-        measured,
-        expected: 0.0,
-        tolerance: 1e-7,
-        error: measured,
-    }
+    fdtd_adjoint_against_differences(crate::fdtd::adjoint_checks::Objective::Flux)
 }
 
 fn fdtd_adjoint_fdfd() -> Outcome {
