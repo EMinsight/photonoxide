@@ -463,7 +463,7 @@ Device-scale propagation without FDTD, and what a designer asks of a mode, each 
 - [ ] **Studio:** the live optimization dashboard (design, fields, figure of merit, constraints).
 - [ ] **Validation,** each in 3D and within stated tolerances:
   - Chen et al. 2024's benchmark suite, cross-checked across independent codes;
-  - Khan 2024's fabrication-aware Y-branch and SWG converter (measured on SiEPIC's process);
+  - Khan 2024's fabrication-aware Y-branch and SWG-to-strip converter (made by Applied Nanotools' electron-beam lithography, the DUV process emulated by applying UBC's lithography model before it; measured near 1320 nm);
   - the wavelength demultiplexer (Piggott 2015);
   - the polarization beamsplitter (Shen 2015);
   - the mode multiplexer (Frellsen 2016);
@@ -816,7 +816,7 @@ Every reference below was checked against its DOI. The performance work's refere
 - M. Chen et al., J. Opt. Soc. Am. B 41, A161 (2024). [10.1364/JOSAB.506412](https://doi.org/10.1364/JOSAB.506412)
 - A. M. Hammond et al., subpixel-smoothed projection, arXiv:2503.20189 (2025).
 - R. Arrieta, G. Romano, S. G. Johnson, Struct. Multidiscip. Optim. 69, 210 (2026). [10.1007/s00158-026-04388-6](https://doi.org/10.1007/s00158-026-04388-6)
-- S. Khan et al., fabrication-aware inverse design for shape optimization, arXiv:2410.07353 (2024); Opt. Lett. 50, 117 (published online 18 December 2024; the 1 January 2025 issue). [10.1364/OL.543961](https://doi.org/10.1364/OL.543961)
+- S. Raza, M. Hammood, N. A. F. Jaeger, L. Chrostowski, "Fabrication-aware inverse design with shape optimization for photonic integrated circuits", Opt. Lett. 50, 117 (2024; published online 18 December 2024, the 1 January 2025 issue); the first author is "Shaheer Raza" at Optica and on Crossref, "Shaheer Khan" on the preprint, arXiv:2410.07353 ("Fabrication-aware inverse design for shape optimization"), hence "Khan 2024" here. [10.1364/OL.543961](https://doi.org/10.1364/OL.543961)
 - S. Mason et al., co-optimized inverse-designed WDMs, arXiv:2509.07233 (2025).
 - Z. Liu, J. K. S. Poon, Lumerical FDTD and Tidy3D compared, arXiv:2506.16665 (2025).
 - L. A. Lugiato, R. Lefever, Phys. Rev. Lett. 58, 2209 (1987). [10.1103/PhysRevLett.58.2209](https://doi.org/10.1103/PhysRevLett.58.2209)
