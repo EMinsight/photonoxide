@@ -7,7 +7,7 @@
 //! their Tables 2 and 3.
 
 use super::phase_change::{
-    self, GUREVICH_CP_298, NJOROGE_DENSITY, njoroge_xrd_density, sb2s3_density,
+    self, GUREVICH_CP_298, KAITO_TABLE_1, NJOROGE_DENSITY, njoroge_xrd_density, sb2s3_density,
 };
 use crate::validation::Outcome;
 
@@ -186,6 +186,17 @@ pub(crate) fn sb2s3_gurevich_high() -> Outcome {
     outcome(d, 0.0, 0.05)
 }
 
+/// Kaito et al.'s density deficit of amorphous Sb₂S₃ films from Table 1's two densities, the
+/// catalogue's amorphous 3420 kg/m³ against their crystal's 4.64 g/cm³, against the 26 % the same
+/// table prints (percent).
+pub(crate) fn sb2s3_kaito_deficit() -> Outcome {
+    let amorphous = phase_change::phase_change("sb2s3")
+        .and_then(|p| p.amorphous_density)
+        .map_or(f64::NAN, |c| c.value);
+    let (crystal, deficit) = KAITO_TABLE_1;
+    outcome(100.0 * (1.0 - amorphous / (crystal * 1e3)), deficit, 0.5)
+}
+
 /// Sb₂S₃'s crystal density from Gurevich et al.'s cell against the 4640 kg/m³ Aryana et al.
 /// 2023 take for the crystal (from Popescu's book): the relative deviation.
 pub(crate) fn sb2s3_density_check() -> Outcome {
@@ -208,6 +219,7 @@ mod tests {
             ("gurevich low", sb2s3_gurevich_low()),
             ("gurevich high", sb2s3_gurevich_high()),
             ("sb2s3 density", sb2s3_density_check()),
+            ("sb2s3 kaito", sb2s3_kaito_deficit()),
         ] {
             assert!(o.error <= o.tolerance, "{name}: {o:?}");
         }
@@ -239,5 +251,9 @@ mod tests {
         let s = phase_change::phase_change("sb2s3").unwrap();
         assert!((s.specific_heat.as_ref().unwrap().value - 351.92).abs() < 0.01);
         assert!((s.heat_capacity().unwrap() - 1.641e6).abs() < 1e3);
+        // the amorphous state Kaito et al.'s density with the crystal's c_p: 1.204 MJ/(m³·K)
+        let a = s.heat_capacity_of(State::Amorphous).unwrap();
+        assert!((a - 3420.0 * 351.92).abs() < 50.0, "{a}");
+        assert!((sb2s3_kaito_deficit().measured - 26.293).abs() < 1e-3);
     }
 }

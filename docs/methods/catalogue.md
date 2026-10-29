@@ -407,11 +407,26 @@ the catalogue takes them from the primary papers, read in full:
   value at 430 K, not room temperature's. M. Kassem et al., J. Mater. Chem. C 11, 4654 (2023),
   doi:10.1039/d3tc00081h, print neither the glass's density nor its melting point (they mark it on
   their figures).
+- **Amorphous Sb₂S₃'s density:** C. Kaito, N. Nakamura, T. Yoshida, M. Shiojiri, J. Cryst. Growth
+  66, 156 (1984), doi:10.1016/0022-0248(84)90086-1, Table 1: 3.42 ± 0.06 g/cm³ for films
+  evaporated onto KCl at room temperature (the source at about 800 °C) and stripped free, amorphous
+  by their diffraction halos, against the bulk crystal's 4.64, 26 % less; Table 1's two densities
+  give 26.29 % (`material/pcm-sb2s3-kaito-deficit`). The catalogue takes 3420 ± 60 kg/m³ for the
+  amorphous state. The paper measures it as its ref. 8 (Shiojiri et al. 1977) does, a method it
+  doesn't describe, on films whose thickness it doesn't give (those it images are 8 to 28 nm), and
+  puts the deficit down to voids between micro-crystallites. It disagrees with P. Kepič et al.,
+  New J. Phys. 26, 013005 (2024), doi:10.1088/1367-2630/ad1696, whose pulsed-laser-deposited films
+  thin by about 12 % on crystallizing (250 °C for 5 min; Section 2, p. 4): with the area held and
+  no mass lost, that is about 0.88 of the crystal's density, against Kaito et al.'s 0.74 (0.73 of
+  the 4663 kg/m³ above). The papers don't explain the difference (the films are made differently,
+  and Kepič et al. give a thickness change, not a density); it is noted, not resolved. No
+  measurement of amorphous Sb₂Se₃'s density was found: its amorphous state takes the crystal's.
 
 So every material has $T_c$, $T_m$, κ of both states, $c_p$ and ρ, what a switching pulse needs;
 GST's states differ in ρ and $c_p$ (`PhaseChange::density_of`, `specific_heat_of`,
-`heat_capacity_of`: ρc_p 1.40 MJ/(m³·K) amorphous, 1.24 crystalline), and where a state has no
-value of its own it takes the crystal's: Sb₂Se₃'s and Sb₂S₃'s amorphous densities are coming. A
+`heat_capacity_of`: ρc_p 1.40 MJ/(m³·K) amorphous, 1.24 crystalline), Sb₂S₃'s in ρ (1.20 and
+1.64 MJ/(m³·K)), and where a state has no value of its own it takes the crystal's: Sb₂Se₃'s
+amorphous density and Sb₂S₃'s amorphous $c_p$ are coming. A
 film crystallizes when held above $T_c$ long enough (milliseconds for
 Sb₂Se₃ by Lawson et al.; the kinetics aren't modelled) and is amorphized when it melts and is
 quenched; latent heat doesn't change when a film first reaches $T_m$, so the switching

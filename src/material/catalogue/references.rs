@@ -54,6 +54,20 @@ const PAPERS: &[(&str, &str, &str, &str, &str)] = &[
         "https://doi.org/10.1364/OME.503178",
     ),
     (
+        "kaito-1984",
+        "C. Kaito, N. Nakamura, T. Yoshida, M. Shiojiri, J. Cryst. Growth 66, 156 (1984)",
+        "Structure and the process of crystallization in thin amorphous Sb2S3 films",
+        "10.1016/0022-0248(84)90086-1",
+        "",
+    ),
+    (
+        "kepic-2024",
+        "P. Kepič, P. Liška, B. Idesová, O. Caha, F. Ligmajer, T. Šikola, New J. Phys. 26, 013005 (2024)",
+        "Pulsed laser deposition of Sb2S3 films for phase-change tunable nanophotonics",
+        "10.1088/1367-2630/ad1696",
+        "https://doi.org/10.1088/1367-2630/ad1696",
+    ),
+    (
         "friedrich-2000",
         "I. Friedrich, V. Weidenhof, W. Njoroge, P. Franz, M. Wuttig, J. Appl. Phys. 87, 4130 (2000)",
         "Structural transformations of Ge2Sb2Te5 films studied by electrical resistance measurements",
