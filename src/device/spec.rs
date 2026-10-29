@@ -57,8 +57,9 @@ use crate::units::Length;
 use crate::{Error, Result};
 
 use super::{
-    Cells, Design, Device, FdfdGrid, Mesh, Model2d, RibWaveguide, StripBend, StripCoupler,
-    StripMmi, StripMzi, StripRing, StripWaveguide, StripYBranch, TflnModulator, ThermoShifter,
+    Cells, Design, Device, FdfdGrid, Mesh, Model2d, PcmShifter, RibWaveguide, StripBend,
+    StripCoupler, StripMmi, StripMzi, StripRing, StripWaveguide, StripYBranch, TflnModulator,
+    ThermoShifter,
 };
 use crate::circuit::components::MmiKind;
 
@@ -70,7 +71,9 @@ pub struct Spec {
     /// `"directional coupler"`, `"all-pass ring"`, `"add-drop ring"`, `"rib waveguide"`,
     /// `"MMI 1x2"`, `"MMI 2x2"`, `"Y-branch"`, `"MZI"`, `"Y-branch MZI"`,
     /// `"thermo-optic phase shifter"`, `"doped thermo-optic phase shifter"`,
-    /// `"in-guide thermo-optic phase shifter"` or `"TFLN Mach-Zehnder modulator"` (on its own
+    /// `"in-guide thermo-optic phase shifter"`, `"GST phase-change phase shifter"`,
+    /// `"Sb2S3 phase-change phase shifter"`, `"Sb2Se3 phase-change phase shifter"` or
+    /// `"TFLN Mach-Zehnder modulator"` (on its own
     /// lithium niobate stack: the default stack, left out).
     pub kind: String,
     /// The fidelity it is computed at.
@@ -292,6 +295,11 @@ impl Spec {
             "in-guide thermo-optic phase shifter" => {
                 Box::new(ThermoShifter::in_guide_on(stack, &core)?)
             }
+            "GST phase-change phase shifter" => Box::new(PcmShifter::on("gst", stack, &core)?),
+            "Sb2S3 phase-change phase shifter" => Box::new(PcmShifter::on("sb2s3", stack, &core)?),
+            "Sb2Se3 phase-change phase shifter" => {
+                Box::new(PcmShifter::on("sb2se3", stack, &core)?)
+            }
             super::tfln::KIND => {
                 if self.stack != StackSpec::default() {
                     return Err(Error::invalid(
@@ -312,8 +320,8 @@ impl Spec {
                         "no device \"{other}\": waveguide, bend, directional coupler, all-pass \
                          ring, add-drop ring, rib waveguide, MMI 1x2, MMI 2x2, Y-branch, MZI, \
                          Y-branch MZI, thermo-optic phase shifter, doped thermo-optic phase \
-                         shifter, in-guide thermo-optic phase shifter or TFLN Mach-Zehnder \
-                         modulator"
+                         shifter, in-guide thermo-optic phase shifter, GST, Sb2S3 or Sb2Se3 \
+                         phase-change phase shifter or TFLN Mach-Zehnder modulator"
                     ),
                 ));
             }

@@ -170,7 +170,7 @@ area device \
   "src/device.rs src/device/*" \
   "material mode circuit generator fdfd job compact statics shifter pockels line" \
   "device::" "device/" \
-  "strip_waveguide directional_coupler mzi_dwivedi ring_q_factor bend_loss rib_hadley mmi_soldano y_junction_zhang thermo_jacques thermo_harris tfln_zhang"
+  "strip_waveguide directional_coupler mzi_dwivedi ring_q_factor bend_loss rib_hadley mmi_soldano y_junction_zhang thermo_jacques thermo_harris pcm_delaney tfln_zhang"
 
 area compact \
   "src/compact/*" \

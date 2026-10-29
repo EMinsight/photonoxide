@@ -654,6 +654,9 @@ fn the_library_has_the_first_devices_each_with_its_models() {
             "thermo-optic phase shifter",
             "doped thermo-optic phase shifter",
             "in-guide thermo-optic phase shifter",
+            "GST phase-change phase shifter",
+            "Sb2S3 phase-change phase shifter",
+            "Sb2Se3 phase-change phase shifter",
             "TFLN Mach-Zehnder modulator"
         ]
     );
@@ -665,8 +668,11 @@ fn the_library_has_the_first_devices_each_with_its_models() {
             _ => A,
         };
         assert_eq!(methods[0].fidelity, first, "{}", d.kind());
-        // the highest 3D, or the measured device for the active ones
-        let highest = if d.kind().contains("phase shifter") || d.kind().contains("modulator") {
+        // the highest 3D, or the measured device for the heaters and the modulator, or the 2D
+        // cross-section's solve for the phase-change cells
+        let highest = if d.kind().contains("phase-change") {
+            Fidelity::TwoD
+        } else if d.kind().contains("phase shifter") || d.kind().contains("modulator") {
             Fidelity::Measured
         } else {
             Fidelity::ThreeD
