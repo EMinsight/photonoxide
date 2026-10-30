@@ -49,6 +49,7 @@ pub fn rules() -> Vec<(&'static str, Rule)> {
     rules.extend(devices::rules());
     rules.extend(pcm::rules());
     rules.extend(eme::rules());
+    rules.extend(convergence::rules());
     rules.extend(modulator::rules());
     rules.extend(mode_quantities::rules());
     rules
@@ -2236,6 +2237,8 @@ pub fn cases() -> Vec<Case> {
     cases.extend(crate::device::pcm_checks::cases());
     // and eigenmode expansion's: slab steps against closed forms, tapers against FDFD
     cases.extend(crate::eme::checks::cases());
+    // and convergence to a tolerance: the mode solver, FDFD and the expansion driven to one
+    cases.extend(crate::convergence::checks::cases());
     // and the thin-film lithium niobate Mach-Zehnder modulator as a device
     cases.extend(crate::device::tfln_checks::cases());
     // and a mode's quantities: its effective area, confinement and orthogonality
@@ -5249,6 +5252,7 @@ fn um(value: f64) -> Wavelength {
     Wavelength::from_um_unchecked(value)
 }
 
+mod convergence;
 mod devices;
 mod eme;
 mod fdfd;
