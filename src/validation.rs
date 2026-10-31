@@ -63,6 +63,7 @@ pub fn rules() -> Vec<(&'static str, Rule)> {
     rules.extend(fabrication::rules());
     rules.extend(fabrication_rules::rules());
     rules.extend(nonlinear_guides::rules());
+    rules.extend(nonlinear_kerr::rules());
     rules
 }
 
@@ -2268,6 +2269,8 @@ pub fn cases() -> Vec<Case> {
     cases.extend(crate::fabrication::rule_checks::cases());
     // and in waveguides, from their modes: modal phase matching, the overlaps' coupling, SPDC
     cases.extend(crate::nonlinear::guide_checks::cases());
+    // and third-order processes: the NLSE, four-wave mixing and the Lugiato-Lefever equation
+    cases.extend(crate::nonlinear::kerr_checks::cases());
     cases
 }
 
@@ -5296,6 +5299,7 @@ mod modulator_error;
 mod nonlinear;
 mod nonlinear_data;
 mod nonlinear_guides;
+mod nonlinear_kerr;
 mod pcm;
 mod pcm_conformal;
 mod roughness;
